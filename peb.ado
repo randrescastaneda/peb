@@ -21,14 +21,24 @@ CALCulate                      ///
 indir(string)                  ///
 outdir(string)                 ///
 replace *                      /// 
+VCdate(passthru)               ///
+MAXdate                        ///
 ]
 
 
 drop _all
 gtsd check peb
+
+/*==================================================
+               Consistency Check
+==================================================*/
 * Directory Paths
 if ("`indir'"  == "") local indir  "\\wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
-if ("`outdir'" == "") local outdir ""
+if ("`outdir'" == "") local outdir "\\wbgfscifs01\GTSD\03.projects_corp\01.PEB\01.PEB_AM18\01.PEB_AM18_QA\02.input"
+
+
+* vintage control
+if ("`vcdate'" == "" & "`maxdate'" == "") local maxdate "maxdate"
 
 
 /*==================================================
@@ -40,30 +50,40 @@ if ("`indicator'" == "pov") {
 	use "`indir'\indicators_pov_long.dta", clear
 }
 
+*----- Organize data 
+destring year, force replace // convert to values
+keep if fgt == 0
 
-split veralt, gen(valt) parse("0") 
-split veralt, gen(vmst) parse("0") 
-drop valt1 vmst1
-destring valt2 vmst2, replace force
+* vintage control
+peb_vcontrol, `maxdate' `vcdate'
+local vcvar = "`r(maxdate)'" // modify to make it flexible between max and vcontrol
+keep if `vcvar' == 1
 
-sort countrycode year
-by countrycode year: egen maxmst = max(vmst2)
-keep if maxmst == vmst2
-
-by countrycode year: egen maxalt = max(valt2)
-keep if maxalt == valt2
-
-drop max* v*2 
-
-* remove duplicates by module
-duplicates tag countrycode year line fgt , gen(tag)
+*------- remove duplicates 
+* by module
+duplicates tag countrycode year line , gen(tag)
 keep if (tag ==  0| (tag == 1 & module == "ALL"))
 drop tag
 
-*remove duplicates by survey. 
-duplicates report countrycode year line fgt 
-    
-*---------1.2: Include Exceptions
+* by survey. 
+duplicates report countrycode year line 
+
+
+/* NOTE: we need to include here the default survey for each 
+country in case there are more than one.  */
+
+* ----- Create id for INDEX formula
+
+gen id = region + countrycode + strofreal(year) /* 
+ */      + "pov" + strofreal(line) 
+
+
+keep id region countrycode year filename line /* 
+ */  date time datetime values
+
+order id region countrycode year filename date time  datetime line values
+
+*---------Include Exceptions
 
 
 /*==================================================
