@@ -36,7 +36,7 @@ qui {
 	==================================================*/
 	* Directory Paths
 	if ("`indir'"  == "") local indir  "\\wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
-	if ("`outdir'" == "") local outdir "\\wbgfscifs01\GTSD\03.projects_corp\01.PEB\01.PEB_AM18\01.PEB_AM18_QA\02.input"
+	if ("`outdir'" == "") local outdir "\\wbgfscifs01\GTSD\03.projects_corp\01.PEB\01.PEB_AM18\01.PEB_AM18_QA"
 	
 	
 	* vintage control
@@ -69,16 +69,29 @@ qui {
 	
 	
 	/*==================================================
-	1: Poverty
+	1: Basic indicators
 	==================================================*/
 	
 	*---------1.1: clean the file
-	if ("`indic'" == "pov") {
+	if inlist("`indic'", "pov", "ine") {
 		use "`indir'\indicators_`indic'_long.dta", clear
+		
+		* ---- Indicator-specific conditions
+		
+		* pov
+		if ("`indic'" == "pov") {
+			keep if fgt == 0
+			rename line case
+			tostring case, replace force
+		}
+		
+		*ine
+		if ("`indic'" == "ine") {
+			rename ineq case 
+		}
 		
 		*----- Organize data 
 		destring year, force replace // convert to values
-		keep if fgt == 0
 		
 		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
 		local vcvar = "`r(`vconfirm')'" 
@@ -86,12 +99,12 @@ qui {
 		
 		*------- remove duplicates 
 		* by module
-		duplicates tag countrycode year line , gen(tag)
+		duplicates tag countrycode year case , gen(tag)
 		keep if (tag ==  0| (tag == 1 & module == "ALL"))
 		drop tag
 		
 		* by survey. 
-		duplicates report countrycode year line 
+		duplicates report countrycode year case 
 		
 		
 		/* NOTE: we need to include here the default survey for each 
@@ -99,14 +112,15 @@ qui {
 		
 		* ----- Create id for INDEX formula
 		
+		gen indicator = "`indic'"
 		gen id = region + countrycode + strofreal(year) /* 
-		*/      + "`indic'" + strofreal(line) 
+		*/      + indicator + case
 		
-		
-		keep id region countrycode year filename line /* 
+		keep id indicator region countrycode year filename case /* 
 		*/  date time datetime values
 		
-		order id region countrycode year filename date time  datetime line values
+		order id indicator region countrycode year filename /* 
+		 */   date time  datetime case values
 		
 		*---------Include Exceptions
 		
@@ -117,23 +131,19 @@ qui {
 	
 	
 	/*==================================================
-	2: Inequality
+	2: 
 	==================================================*/
 	
 	*--------------------2.1:
-	if ("`indic'" == "ine") {
-		use "`indir'\indicators_`indic'_long.dta", clear
-	}
-	
-	*--------------------2.2:
 	
 	
 	/*==================================================
-	3: 
+	3:  Master file
 	==================================================*/
 	
-	
 	*--------------------3.1:
+	local indicators "pov ine"
+	
 	
 	
 	*--------------------3.2:
