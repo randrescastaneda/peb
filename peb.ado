@@ -20,9 +20,11 @@ syntax anything(name=indic id="indicator"), [ ///
 CALCulate                      ///
 indir(string)                  ///
 outdir(string)                 ///
+ttldir(string)                 ///
 replace *                      /// 
 VCdate(string)                 ///
 MAXdate                        ///
+trace(string)                  ///
 ]
 
 
@@ -37,6 +39,7 @@ qui {
 	* Directory Paths
 	if ("`indir'"  == "") local indir  "\\wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
 	if ("`outdir'" == "") local outdir "\\wbgfscifs01\GTSD\03.projects_corp\01.PEB\01.PEB_AM18\01.PEB_AM18_QA"
+	if ("`ttldir'" == "") local ttldir "\\gpvfile\GPV\Knowledge_Learning\PEB\02.tool_output\01.PovEcon_input"
 	
 	
 	* vintage control
@@ -62,11 +65,9 @@ qui {
 	
 	
 	/*==================================================
-	Prepare final file
+	Update exceptions
 	==================================================*/
-	
-	* cap confirm file "`outdir'/peb_master.dta"
-	
+	peb_exception load, outdir("`outdir'") ttldir("`ttldir'") datetime(`datetime')
 	
 	/*==================================================
 	1: Basic indicators
@@ -113,18 +114,26 @@ qui {
 		* ----- Create id for INDEX formula
 		
 		gen indicator = "`indic'"
-		gen id = region + countrycode + strofreal(year) /* 
-		*/      + indicator + case
 		
+		gen id = countrycode + strofreal(year) + indicator + case
+		 
 		keep id indicator region countrycode year filename case /* 
 		*/  date time datetime values
 		
 		order id indicator region countrycode year filename /* 
 		 */   date time  datetime case values
 		
-		*---------Include Exceptions
 		
-		* Save file
+		*-------------------------------------------------------------
+		*------------------Include Groups Data------------------------
+		*-------------------------------------------------------------
+
+		*----------Save file
+		if (regexm("`trace'", "E|Ex")) set trace on
+		peb_exception apply, outdir("`outdir'") // exceptions
+		set trace off
+		
+		
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
 		
 	} // end of pov
@@ -176,3 +185,11 @@ shell attrib +s +h "`path'.git" & pause
 
 shell git clone --bare -l "`path'" "`path'.git"
 
+
+
+
+datalibweb_inventory
+	describe, varlist
+	putmata CL=(`r(varlist)'), replace
+	local n = _N
+	

@@ -50,6 +50,9 @@ qui {
 			use "`outdir'\02.input/peb_master.dta", clear
 			merge 1:1 `mergevar' indicator using "`outdir'\02.input/peb_`indic'.dta", /* 
 			*/       replace update nogen
+			
+			peb_exception apply, outdir("`outdir'")
+			
 		} 
 		
 		cap noi datasignature confirm, strict
@@ -61,16 +64,18 @@ qui {
 			save "`outdir'\02.input/peb_master.dta", replace
 			noi disp in y "file /peb_master.dta has been updated"
 			
-			* Excel Tool
-			cap export excel using "`outdir'\05.tools\PEB_template_AM18.xlsm" , /* 
-			*/         sheet("master") sheetreplace first(variables) 
+			* CSV master file
+			
+			cap export delimited using "`outdir'\05.tools\peb_master.csv" , replace 
+			
 			if (_rc) {
-				noi disp in red "Error updating PEB_template_AM18.xlsm." _n /* 
+				noi disp in red "Error updating /peb_master.csv." _n /* 
 				*/   "Fix and then resubmit by clicking " _c /* 
-				*/   `"{stata export excel using "`outdir'\05.tools\PEB_template_AM18.xlsm" , sheet("master") sheetreplace first(variables):here}"' _n
+				*/   `"{stata export delimited using "`outdir'\05.tools\peb_master.csv" , replace:here}"' _n
+				error
 			}
 			else {
-				noi disp in y "file PEB_template_AM18.xlsm updated successfully"
+				noi disp in y "file peb_master.csv updated successfully"
 			}
 			
 		} // End of master file update
