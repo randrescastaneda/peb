@@ -17,9 +17,8 @@ datetime(numlist)               ///
 
 * Indicator-specific conditions
 qui {
-	if inlist("`indic'", "pov", "ine") {
-		local mergevar "countrycode year case"
-	}
+	
+	local mergevar "countrycode year case"
 	
 	
 	cap confirm file "`outdir'\02.input/peb_master.dta"
@@ -35,12 +34,19 @@ qui {
 		merge 1:1 `mergevar' using `indicfile', replace update nogen
 	}
 	
-	cap noi datasignature confirm, strict
+	cap noi datasignature confirm using /* 
+	 */ "`outdir'\02.input/_datasignature/peb_`indic'", strict
 	local rcindic  = _rc
+	if (`rcindic' != 0) {
+		noi disp in y "detailed report of changes in peb_`indic'.dta"
+		noi datasignature report
+	}
+	
 	
 	if (`rcindic' | `rcmaster') { // IF file does not exist or is different
 		
 		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'_`datetime'")
+		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'", replace)
 		save "`outdir'\02.input/_vintage/peb_`indic'_`datetime'.dta" 
 		save "`outdir'\02.input/peb_`indic'.dta", replace
 		noi disp in y "file /peb_`indic'.dta has been updated"
@@ -51,15 +57,25 @@ qui {
 			merge 1:1 `mergevar' indicator using "`outdir'\02.input/peb_`indic'.dta", /* 
 			*/       replace update nogen
 			
-			peb_exception apply, outdir("`outdir'")
+			if inlist("`indic'", "pov", "ine") {
+				peb_exception apply, outdir("`outdir'")				
+			}
 			
 		} 
 		
-		cap noi datasignature confirm, strict
-		if (_rc | `rcmaster') {  // IF file is different of dile does not exist
+		cap noi datasignature confirm using /* 
+		 */ "`outdir'\02.input/_datasignature/peb_master", strict
+		local rcmastsign = _rc
+		if (`rcmastsign' != 0) {
+			noi disp in y "detailed report of changes in peb_master.dta"
+			noi datasignature report
+		}
+		
+		if (`rcmastsign' | `rcmaster') {  // IF file is different of dile does not exist
 			
 			* DTA file
 			datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_master_`datetime'")
+			datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_master", replace)
 			save "`outdir'\02.input/_vintage/peb_master_`datetime'.dta" 
 			save "`outdir'\02.input/peb_master.dta", replace
 			noi disp in y "file /peb_master.dta has been updated"

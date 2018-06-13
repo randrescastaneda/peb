@@ -18,6 +18,7 @@ syntax anything(name=action id=action), [  ///
 ttldir(string)                   ///
 outdir(string)                   ///
 datetime(numlist)                ///
+indic(string)                    ///
 ]
 
 *---------- conditions
@@ -31,30 +32,47 @@ if !inlist("`action'", "load", "apply") {
 qui {
 	
 	
+	
 	/*==================================================
 	1: Load
 	==================================================*/
 	*----------1.1:
 	if ("`action'" == "load") {
-		import excel using "`ttldir'/Exceptions.xlsx", sheet("Exceptions") /* 
-		*/   firstrow case(lower) clear allstring
 		
-		* reshape long values, i(code) j(condition) string
-		rename code countrycode
-		drop countryname
+		if ("`indic'" == "") local indic "pov"
 		
-		cap datasignature confirm using "`outdir'/02.input/_datasignature/peb_exceptions", strict 
-		if (_rc) {
-			noi disp in r "NOTE: " in y "peb_xceptions.dta has changed or does not exist. " _c /* 
-			*/  " It will be updated/created from file Exceptions.xlsx in ttldir()" _n
+		if ("`indic'" == "shp") {
+			local xlnames  "ShPUpdate"
+		}
+		if inlist("`indic'", "pov", "ine") {
+			local xlnames  "Exceptions comparable"
+		}
+		
+		foreach xlname of local xlnames {
 			
-			datasignature set, reset saving("`outdir'/02.input/_datasignature/peb_exceptions_`datetime'") 
-			datasignature set, reset saving("`outdir'/02.input/_datasignature/peb_exceptions", replace) 
-			save "`outdir'/02.input/peb_exceptions.dta", replace
+			local sufname = lower("`xlname'")
+			
+			import excel using "`ttldir'/`xlname'.xlsx", sheet("`xlname'") /* 
+			*/   firstrow case(lower) clear allstring
+			
+			* reshape long values, i(code) j(condition) string
+			
+			cap datasignature confirm using "`outdir'/02.input/_datasignature/peb_`sufname'", strict 
+			if (_rc) {
+				noi disp in r "NOTE: " in y "peb_`sufname'.dta has changed or does not exist. " _c /* 
+				*/  " It will be updated/created from file `xlname'.xlsx in ttldir()" _n
+				
+				datasignature set, reset saving("`outdir'/02.input/_datasignature/peb_`sufname'_`datetime'") 
+				datasignature set, reset saving("`outdir'/02.input/_datasignature/peb_`sufname'", replace) 
+				save "`outdir'/02.input/peb_`sufname'.dta", replace
+			}
+			else {
+				noi disp in y "peb_`sufname'.dta is up to date."
+			}
+			
 		}
-		else {
-			noi disp in y "peb_xceptions.dta is up to date."
-		}
+		
+		
 	} // end of load condition
 	
 	/*==================================================
@@ -63,6 +81,7 @@ qui {
 	
 	*----------2.1:
 	if ("`action'" == "apply") {
+		
 		
 		*merge 
 		merge m:1 countrycode using "`outdir'/02.input/peb_exceptions.dta", /*  
@@ -84,13 +103,13 @@ qui {
 			local yearlist = "`r(numlist)'"
 			local yearlist: subinstr local yearlist " " "|", all
 			replace ex_2drop = 1 if (countrycode == "`code'" &  /* 
-			*/     !regexm(strofreal(year), "`yearlist'"))
+			*/     !regexm(year, "`yearlist'"))
 		}
 		
-	
+		
 		drop if ex_2drop == 1
-	
-	* Exclude lines or gini
+		
+		* Exclude lines or gini
 		local cases "190 190c 320 550 gini"
 		foreach case of local cases {
 			if (regexm("`case'", "[0-9]")) local casevar "fgt0_`case'"
@@ -100,6 +119,7 @@ qui {
 		
 		* drop ex_ vars
 		drop ex_*
+		
 		noi disp in y _n "Exceptions apply successfully"
 		
 	} // end of apply condition

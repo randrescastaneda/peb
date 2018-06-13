@@ -67,7 +67,9 @@ qui {
 	/*==================================================
 	Update exceptions
 	==================================================*/
-	peb_exception load, outdir("`outdir'") ttldir("`ttldir'") datetime(`datetime')
+	peb_exception load, outdir("`outdir'") ttldir("`ttldir'") /* 
+	*/ datetime(`datetime') indic("`indic'")
+	
 	
 	/*==================================================
 	1: Basic indicators
@@ -90,6 +92,13 @@ qui {
 		if ("`indic'" == "ine") {
 			rename ineq case 
 		}
+		
+		
+		* Comparable years
+		merge m:1 countrycode year welfarevar using "`outdir'/02.input/peb_comparable.dta", /*  
+		*/  keep(match) keepusing(comparable) nogen
+		
+		destring comparable, replace force
 		
 		*----- Organize data 
 		destring year, force replace // convert to values
@@ -115,19 +124,20 @@ qui {
 		
 		gen indicator = "`indic'"
 		
-		gen id = countrycode + strofreal(year) + indicator + case
-		 
+		tostring year, replace force
+		gen id = countrycode + year + indicator + case
+		
 		keep id indicator region countrycode year filename case /* 
-		*/  date time datetime values
+		*/  date time datetime values comparable
 		
 		order id indicator region countrycode year filename /* 
-		 */   date time  datetime case values
+		*/   date time  datetime case values comparable
 		
 		
 		*-------------------------------------------------------------
 		*------------------Include Groups Data------------------------
 		*-------------------------------------------------------------
-
+		
 		*----------Save file
 		if (regexm("`trace'", "E|Ex")) set trace on
 		peb_exception apply, outdir("`outdir'") // exceptions
@@ -140,22 +150,111 @@ qui {
 	
 	
 	/*==================================================
-	2: 
+	2: Shared Prosperity
 	==================================================*/
-	
-	*--------------------2.1:
-	
+	*---------------2.1:
+	if ("`indic'" == "shp") {
+		
+		use "`indir'\indicators_`indic'_long.dta", clear
+		destring year, force replace // convert to values
+		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
+		local vcvar = "`r(`vconfirm')'" 
+		keep if `vcvar' == 1
+		
+		
+		* Merge with Exceptions
+		merge m:1 countrycode using "`outdir'/02.input/peb_shpupdate.dta", /* 
+		*/   keep(match) nogen
+		gen ytemp = yeart0 + "-" + yeart1
+		destring yeart0 yeart1, replace force
+		
+		* keep relevant data
+		keep if inlist(year, yeart0, yeart1)
+		keep if inlist(welfarevar, welfaret0, welfaret1)
+		keep if inlist(case, "b40", "mean")
+		keep if (survname == surveyname | surveyname == "")
+		
+		
+		* filter by module
+		duplicates tag countrycode survname year case, gen(tag)
+		keep if (tag ==  0| (tag > 0 & module == "ALL"))
+		drop tag
+		
+		* annualized growth
+		bysort countrycode survname case (year): gen growth = /* 
+		*/  (values[_n]/values[_n-1])^(1/(year[_n]-year[_n-1])) -1 
+		
+		keep if growth != .
+		
+		* expand to add premium
+		gen expand = cond(case == "b40", 2, 1)
+		expand expand, gen(tag)
+		replace case = "pre" if tag ==1
+		
+		* calculate premium
+		bysort countrycode (tag case): replace growth = /* 
+		*/ growth[_n-2] - growth[_n-1] if tag ==1
+		
+		* Create ID and keep relevant data
+		
+		gen indicator = "`indic'"
+		
+		replace case = "tot" if case == "mean"
+		gen id = countrycode + indicator + case
+		
+		
+		keep id indicator region countrycode ytemp filename case /* 
+		*/  date time datetime growth
+		
+		rename (ytemp growth) (year values)
+		
+		order id indicator region countrycode year filename /* 
+		*/   date time  datetime case values
+		
+		* Save data
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
+	}
 	
 	/*==================================================
-	3:  Master file
+	3: National Poverty numbers
 	==================================================*/
 	
-	*--------------------3.1:
-	local indicators "pov ine"
+	*--------------------
 	
 	
+	*--------------------
 	
-	*--------------------3.2:
+	/*==================================================
+	  
+	==================================================*/
+	
+	*--------------------
+	                     
+	*--------------------
+	
+	/*==================================================
+	  
+	==================================================*/
+	
+	*--------------------
+	                     
+	*--------------------
+	
+	/*==================================================
+	  
+	==================================================*/
+	
+	*--------------------
+	                     
+	*--------------------
+	
+	/*==================================================
+	  
+	==================================================*/
+	
+	*--------------------
+	                     
+	*--------------------
 	
 	
 	
@@ -189,7 +288,6 @@ shell git clone --bare -l "`path'" "`path'.git"
 
 
 datalibweb_inventory
-	describe, varlist
-	putmata CL=(`r(varlist)'), replace
-	local n = _N
-	
+describe, varlist
+putmata CL=(`r(varlist)'), replace
+local n = _N
