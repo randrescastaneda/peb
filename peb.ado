@@ -30,6 +30,7 @@ trace(string)                  ///
 
 drop _all
 gtsd check peb
+pause on
 
 qui {
 	
@@ -37,9 +38,9 @@ qui {
 	Consistency Check
 	==================================================*/
 	* Directory Paths
-	if ("`indir'"  == "") local indir  "\\wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
-	if ("`outdir'" == "") local outdir "\\wbgfscifs01\GTSD\03.projects_corp\01.PEB\01.PEB_AM18\01.PEB_AM18_QA"
-	if ("`ttldir'" == "") local ttldir "\\gpvfile\GPV\Knowledge_Learning\PEB\02.tool_output\01.PovEcon_input"
+	if ("`indir'"  == "") local indir  "//wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
+	if ("`outdir'" == "") local outdir "//wbgfscifs01\GTSD\03.projects_corp\01.PEB\01.PEB_AM18\01.PEB_AM18_QA"
+	if ("`ttldir'" == "") local ttldir "//gpvfile\GPV\Knowledge_Learning\PEB\02.tool_output\01.PovEcon_input"
 	
 	
 	* vintage control
@@ -88,12 +89,6 @@ qui {
 			tostring case, replace force
 		}
 		
-		*ine
-		if ("`indic'" == "ine") {
-			rename ineq case 
-		}
-		
-		
 		* Comparable years
 		merge m:1 countrycode year welfarevar using "`outdir'/02.input/peb_comparable.dta", /*  
 		*/  keep(match) keepusing(comparable) nogen
@@ -135,18 +130,20 @@ qui {
 		
 		
 		*-------------------------------------------------------------
-		*------------------Include Groups Data------------------------
+		*------------------Include Group Data------------------------
 		*-------------------------------------------------------------
+		
+		
 		
 		*----------Save file
 		if (regexm("`trace'", "E|Ex")) set trace on
 		peb_exception apply, outdir("`outdir'") // exceptions
 		set trace off
 		
-		
+		rename filename source 
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
 		
-	} // end of pov
+	} // end of pov and ine
 	
 	
 	/*==================================================
@@ -172,13 +169,16 @@ qui {
 		keep if inlist(year, yeart0, yeart1)
 		keep if inlist(welfarevar, welfaret0, welfaret1)
 		keep if inlist(case, "b40", "mean")
-		keep if (survname == surveyname | surveyname == "")
-		
-		
 		* filter by module
 		duplicates tag countrycode survname year case, gen(tag)
 		keep if (tag ==  0| (tag > 0 & module == "ALL"))
 		drop tag
+		
+		* Filter survey
+		duplicates tag countrycode year case surveyname, gen(tag)
+		keep if ((survname == surveyname & tag >0) |tag == 0)
+		drop tag
+		
 		
 		* annualized growth
 		bysort countrycode survname case (year): gen growth = /* 
@@ -211,7 +211,10 @@ qui {
 		order id indicator region countrycode year filename /* 
 		*/   date time  datetime case values
 		
+		
+		
 		* Save data
+		rename filename source 
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
 	}
 	
@@ -219,41 +222,254 @@ qui {
 	3: National Poverty numbers
 	==================================================*/
 	
-	*--------------------
+	if ("`indic'" == "npl") {
+		
+		*-------------------- Data from TTL
+		use "`outdir'/02.input/peb_nplupdate.dta", clear
+		* fix dates
+		_gendatetime date time
+		
+		rename country countrycode
+		
+		* include Population provided by the TTL
+		merge m:1 countrycode using "`outdir'/02.input/peb_exceptions.dta", /*  
+		*/ nogen keep(master match) keepusing(ex_nu_poor_npl)
+		
+		* Rename variables to be reshaped 
+		rename (population line gini) values=		
+		rename ex_* values*
+		
+		reshape long values, i(countrycode year datetime) j(case) string
+		
+		replace case = "popu" if case == "population"
+		replace case = "pttl" if case == "nu_poor_npl"
+		destring values, replace force
+		
+		
+		keep countrycode year datetime date time case values
+		gen indicator = "npl"
+		gen source = "TTL"
+		
+		bysort countrycode year case: egen double maxdate = max(datetime)
+		replace maxdate = cond(maxdate == datetime, 1, 0)
+		keep if maxdate == 1
+		
+		
+		gen id = countrycode + year + indicator + case
+		
+		order id indicator countrycode year source /* 
+		*/   date time  datetime case values
+		
+		tempfile ttlfile
+		save `ttlfile'
+		
+		*-------------------- Data from WDI
+		use "`indir'\indicators_wdi_long.dta", clear
+		keep if inlist(case, "si_pov_nahc","sp_pop_totl","ny_gdp_pcap_pp_kd","ny_gnp_pcap_kd")
+		
+		replace countrycode="KSV" if countrycode=="XKX"
+		
+		replace case = "line" if case == "si_pov_nahc" 
+		replace case = "popu"  if case == "sp_pop_totl" 
+		replace case = "gdppc" if case == "ny_gdp_pcap_pp_kd" 
+		replace case = "gnppc" if case == "ny_gnp_pcap_kd" 
+		
+		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
+		local vcvar = "`r(`vconfirm')'" 
+		keep if `vcvar' == 1
+		
+		gen indicator = "npl"
+		gen source = "WDI"
+		
+		bysort countrycode year case (datetime): egen double maxdate = max(datetime)
+		replace maxdate = cond(maxdate == datetime, 1, 0)
+		keep if maxdate == 1
+		
+		
+		tostring year, replace force 
+		gen id = countrycode + year + indicator + case
+		
+		order id indicator countrycode year source /* 
+		*/   date time  datetime case values
+		
+		*--------------Append TTL file and WDI data
+		
+		append using `ttlfile'
+		keep if real(year) >= 2000
+		
+		duplicates tag id, gen(tag)
+		keep if (tag == 0 | (tag >0 & source == "TTL"))
+		drop tag 
+		
+		order id indicator countrycode year source /* 
+		*/   date time  datetime case values
+		
+		keep id indicator countrycode year source /* 
+		*/   date time  datetime case values
+		
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
+		
+		
+	} // End of National POverty lines and Macro indicators. 
 	
+	/*==================================================
+	4: Key Indicators
+	==================================================*/
+	
+	*--------------------
+	if ("`indic'" == "key") {
+		use "`outdir'/02.input/peb_keyupdate.dta", clear
+		 
+		_gendatetime date time
+		 
+		replace countrycode = trim(countrycode)
+		
+		*Create precase
+		gen precase = ""				
+		replace precase = "edu1"  if regexm(indicator, "^Without")
+		replace precase = "edu2"  if regexm(indicator, "^Primary")
+		replace precase = "edu3"  if regexm(indicator, "^Secondary")
+		replace precase = "edu4"  if regexm(indicator, "^Tertiary")
+		replace precase = "gage1" if regexm(indicator, "^0 to 14 ")
+		replace precase = "gage2" if regexm(indicator, "^15 to 64")
+		replace precase = "gage3" if regexm(indicator, "^65 and ")
+		replace precase = "male1" if regexm(indicator, "^[Ff]emale")
+		replace precase = "male2" if regexm(indicator, "^[Mm]ale")
+		replace precase = "rur1"  if regexm(indicator, "^Urban")
+		replace precase = "rur2"  if regexm(indicator, "^Rural")
+		
+		* max date per country
+		tempvar mdatetime
+		bysort countrycode precase: egen double `mdatetime' = max(datetime)
+		keep if datetime == `mdatetime' 
+		
+		
+		* create variable for poverty line to use
+		preserve 
+		keep if regexm(indicator, "^Poverty line") 
+		gen line2disp = cond(regexm(publish, "^[Uu]p"), 550,  /* 
+		*/              cond(regexm(publish, "^[Ll]o"), 320, 190)) 
+		keep countrycode line2disp
+		tempfile lined
+		save `lined'
+		restore
+		
+		merge  m:1 countrycode using `lined', nogen
+		drop if regexm(indicator, "^Poverty line") 
+
+		
+		* Save temporal file
+		tempfile keyu
+		save `keyu', replace
+		
+		
+		* Load indicators file
+		use "`indir'\indicators_`indic'_wide.dta", clear
+		
+		destring year, force replace // convert to values
+		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
+		local vcvar = "`r(`vconfirm')'" 
+		keep if `vcvar' == 1
+		keep if welfarevar == "welfare"
+		
+		* Max year per country
+		tempvar myear
+		bysort countrycode: egen double `myear' = max(year)
+		keep if year == `myear' 
+		tostring year, replace force
+		
+		* Filter by survey in case there is more than one
+		merge m:1 countrycode using "`outdir'/02.input/peb_shpupdate.dta", /* 
+		*/	nogen keepusing(surveyname) keep(master match)
+		
+		
+		duplicates tag countrycode precase, gen(tag)
+		keep if ((survname == surveyname & tag >0) |tag == 0)
+		drop tag
+		
+		* Merge with Exceptions
+		merge 1:1 countrycode precase using `keyu', /* 
+		*/	keepusing(publish line2disp) keep(master match) nogen
+		
+		* clean data 
+		replace line2disp = 190 if line2disp == . 
+		replace publish = "YES" if publish == ""
+		drop if publish == "NO"
+		
+		reshape long values, i(countrycode  precase) /* 
+		*/     j(case) string
+		
+		keep if (regexm(case, "^[BT]") | real(substr(case, 1,3)) == line2disp)
+		
+		
+		* Organize before save
+		
+		gen indicator = "key"
+		rename filename source
+		
+		gen id = cond(regexm(case, "^[BT]"), /* 
+	  */	          countrycode + indicator + precase + case, /* 
+		*/            countrycode + indicator + precase + substr(case, 4,.))
+		
+		replace case = precase + case
+		
+		order id indicator countrycode year source /* 
+		*/   date time  datetime case values
+		
+		keep id indicator countrycode year source /* 
+		*/   date time  datetime case values
+		
+		
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
+				
+	}
 	
 	*--------------------
 	
 	/*==================================================
-	  
+	5. Write ups
 	==================================================*/
 	
 	*--------------------
-	                     
+	if ("`indic'" == "wup") {
+		use "`outdir'/02.input/peb_writeupupdate.dta", clear
+		missings dropvars, force
+		_gendatetime date time
+		
+			* max date per country
+		tempvar mdatetime
+		bysort countrycode: egen double `mdatetime' = max(datetime)
+		keep if datetime == `mdatetime' 
+		
+		destring toclearance topublish, replace force
+		
+		rename (keyfindings  nationaldata) writeup=
+		reshape long writeup, i(countrycode) j(case) string
+		
+		gen id = countrycode + substr(case, 1, 4)
+		
+		order id countrycode case upi date time datetime toclearance topublish writeup
+		
+		
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
+	}
+	
 	*--------------------
 	
 	/*==================================================
-	  
+	
 	==================================================*/
 	
 	*--------------------
-	                     
+	
 	*--------------------
 	
 	/*==================================================
-	  
+	
 	==================================================*/
 	
 	*--------------------
-	                     
-	*--------------------
 	
-	/*==================================================
-	  
-	==================================================*/
-	
-	*--------------------
-	                     
 	*--------------------
 	
 	
@@ -262,6 +478,28 @@ qui {
 }
 
 end
+
+
+program define _gendatetime
+
+args date time nothing
+
+	gen double d = date(`date', "MDY")
+	gen double t = clock(`time', "hms")
+	
+	drop `date' `time'
+	rename (d t) (`date' `time')
+	
+	format `date' %td
+	format `time' %tcHH:MM:SS
+	
+	gen double datetime = `date'*24*60*60*1000 + `time'
+	format datetime %tcDDmonCCYY_HH:MM:SS
+		
+
+end
+
+
 
 exit
 /* End of do-file */
@@ -291,3 +529,23 @@ datalibweb_inventory
 describe, varlist
 putmata CL=(`r(varlist)'), replace
 local n = _N
+
+
+exit 
+WDI fgt0_npl	tot_pop	gdp_pcap	gnp_pcap
+reported fgt0_npl	gini	comparability	tot_pop
+
+
+
+
+
+	local indir  "//wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
+	local outdir "//wbgfscifs01\GTSD\03.projects_corp\01.PEB\01.PEB_AM18\01.PEB_AM18_QA"
+	local ttldir "//gpvfile\GPV\Knowledge_Learning\PEB\02.tool_output\01.PovEcon_input"
+	local indic key
+	peb_exception load, outdir("`outdir'") ttldir("`ttldir'") /* 
+	*/ datetime(`datetime') indic("`indic'")
+	
+	
+	
+	

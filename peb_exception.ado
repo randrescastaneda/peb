@@ -31,6 +31,11 @@ if !inlist("`action'", "load", "apply") {
 
 qui {
 	
+	if ("`datetime'" == "") {
+		local date = date("`c(current_date)'", "DMY")  // %tdDDmonCCYY
+		local time = clock("`c(current_time)'", "hms") // %tcHH:MM:SS
+		loca datetime = `date'*24*60*60*1000 + `time'  // %tcDDmonCCYY_HH:MM:SS
+	}
 	
 	
 	/*==================================================
@@ -47,6 +52,16 @@ qui {
 		if inlist("`indic'", "pov", "ine") {
 			local xlnames  "Exceptions comparable"
 		}
+		if ("`indic'" == "npl") {
+			local xlnames  "NPLUpdate"	
+		}
+		if ("`indic'" == "key") {
+			local xlnames  "KeyUpdate"
+		}
+		
+		if ("`indic'" == "wup") {
+			local xlnames  "WriteUpUpdate"
+		}
 		
 		foreach xlname of local xlnames {
 			
@@ -54,6 +69,14 @@ qui {
 			
 			import excel using "`ttldir'/`xlname'.xlsx", sheet("`xlname'") /* 
 			*/   firstrow case(lower) clear allstring
+			
+			missings dropobs, force
+			desc, varlist
+			local vars = "`r(varlist)'"
+			
+			foreach var of local vars {
+				replace `var' = trim(`var')	
+			}
 			
 			* reshape long values, i(code) j(condition) string
 			
