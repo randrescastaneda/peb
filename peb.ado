@@ -25,6 +25,7 @@ replace *                      ///
 VCdate(string)                 ///
 MAXdate                        ///
 trace(string)                  ///
+load  shape(string)            ///
 ]
 
 
@@ -62,6 +63,20 @@ qui {
 	if wordcount("`indic'") != 1 {
 		noi disp as err "you must specify one {cmd:indicator} at a time."
 		error 
+	}
+	
+	
+	/*====================================================================
+	Load files
+	====================================================================*/
+	
+	if ("`load'" == "load") {
+		if wordcount("`indic'") != 1 {
+			noi disp in red "Only one file can be loaded"
+			error
+		}
+		use "`outdir'\02.input/peb_`indic'.dta", clear
+		exit
 	}
 	
 	
