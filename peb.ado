@@ -227,7 +227,7 @@ qui {
 		*-------------------- Data from TTL
 		use "`outdir'/02.input/peb_nplupdate.dta", clear
 		* fix dates
-		_gendatetime date time
+		_gendatetime_var date time
 		
 		rename country countrycode
 		
@@ -319,9 +319,9 @@ qui {
 	*--------------------
 	if ("`indic'" == "key") {
 		use "`outdir'/02.input/peb_keyupdate.dta", clear
-		 
-		_gendatetime date time
-		 
+		
+		_gendatetime_var date time
+		
 		replace countrycode = trim(countrycode)
 		
 		*Create precase
@@ -356,7 +356,7 @@ qui {
 		
 		merge  m:1 countrycode using `lined', nogen
 		drop if regexm(indicator, "^Poverty line") 
-
+		
 		
 		* Save temporal file
 		tempfile keyu
@@ -421,7 +421,7 @@ qui {
 		
 		
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
-				
+		
 	}
 	
 	*--------------------
@@ -434,12 +434,13 @@ qui {
 	if ("`indic'" == "wup") {
 		use "`outdir'/02.input/peb_writeupupdate.dta", clear
 		missings dropvars, force
-		_gendatetime date time
+		_gendatetime_var date time
 		
-			* max date per country
+		* max date per country
 		tempvar mdatetime
 		bysort countrycode: egen double `mdatetime' = max(datetime)
 		keep if datetime == `mdatetime' 
+		drop `mdatetime' 
 		
 		destring toclearance topublish, replace force
 		
@@ -448,11 +449,84 @@ qui {
 		
 		gen id = countrycode + substr(case, 1, 4)
 		
-		order id countrycode case upi date time datetime toclearance topublish writeup
 		
+		replace writeup = subinstr(writeup, `"“"', `"""', .)
+		replace writeup = subinstr(writeup, `"”"', `"""', .)
+		replace writeup = subinstr(writeup, `"’"', `"'"', .)
+		
+		
+		local keepvars "id countrycode case upi date time datetime toclearance topublish writeup"
+		order `keepvars'
+		keep `keepvars'
 		
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
 	}
+	
+	*--------------------
+	
+	/*==================================================
+	6. International line in LCU
+	==================================================*/
+	
+	*--------------------
+	if ("`indic'" == "plc") {  // Poverty line in Local Currency unite
+		use "`outdir'\02.input/peb_pov.dta", clear
+		destring year, replace
+		collapse (max) year, by(countrycode)
+		
+		tempfile myear
+		save `myear'
+		
+		datalibweb, country(Support) year(2005) surveyid(Support_2005_CPI_v02_M) /* 
+		*/	filename("Final CPI PPP to be used.dta") type(GMDRAW) 
+		
+		local date: char _dta[note1]
+		local date: subinstr local date "updated in" "", all
+		local date: subinstr local date " " "", all
+		
+		local date = date("`date'", "DMY")
+		local date: disp %tdmonDDCCYY `date'
+		
+		gen date = "`date'"
+		gen time = "00:00:00"
+		_gendatetime_var date time
+		
+		/* NOTE: we still need to add a condition for those countries
+		with several data levels. */
+		keep if datalevel == 2
+		
+		rename code countrycode
+		
+		merge 1:1 countrycode year using `myear', keep(match)
+		
+		local plines "1.9 3.2 5.5"
+		foreach ll of loc plines{
+			gen values`=100*`ll'' = `ll'*cpi2011*icp2011
+		}
+		
+		_addregion
+		
+		keep region countrycode year date time datetime values*
+		
+		reshape long values, i(countrycode) j(case)
+		
+		
+		tostring case year, replace force
+		replace case = "ipl" if case == "190" 
+		replace case = "lmi" if case == "320" 
+		replace case = "umi" if case == "550" 
+		
+		gen indicator = "plc"
+		gen id  = countrycode + year + indicator + case
+		gen source = ""
+		
+		order id indicator region countrycode year source /* 
+		*/   date time  datetime case values
+		
+		
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")	
+		
+	} // end of international poverty line to Local currency unit
 	
 	*--------------------
 	
@@ -464,6 +538,65 @@ qui {
 	
 	*--------------------
 	
+	/*==================================================
+	
+	==================================================*/
+	
+	*--------------------
+	
+	*--------------------
+	
+	/*==================================================
+	
+	==================================================*/
+	
+	*--------------------
+	
+	*--------------------
+	
+	/*==================================================
+	
+	==================================================*/
+	
+	*--------------------
+	
+	*--------------------
+	
+	/*==================================================
+	
+	==================================================*/
+	
+	*--------------------
+	
+	*--------------------
+	/*==================================================
+	
+	==================================================*/
+	
+	*--------------------
+	
+	*--------------------
+	/*==================================================
+	
+	==================================================*/
+	
+	*--------------------
+	
+	*--------------------
+	/*==================================================
+	
+	==================================================*/
+	
+	*--------------------
+	
+	*--------------------
+	/*==================================================
+	
+	==================================================*/
+	
+	*--------------------
+	
+	*--------------------
 	/*==================================================
 	
 	==================================================*/
@@ -480,24 +613,66 @@ qui {
 end
 
 
-program define _gendatetime
+program define _gendatetime_var
 
 args date time nothing
 
-	gen double d = date(`date', "MDY")
-	gen double t = clock(`time', "hms")
-	
-	drop `date' `time'
-	rename (d t) (`date' `time')
-	
-	format `date' %td
-	format `time' %tcHH:MM:SS
-	
-	gen double datetime = `date'*24*60*60*1000 + `time'
-	format datetime %tcDDmonCCYY_HH:MM:SS
-		
+gen double d = date(`date', "MDY")
+gen double t = clock(`time', "hms")
+
+drop `date' `time'
+rename (d t) (`date' `time')
+
+format `date' %td
+format `time' %tcHH:MM:SS
+
+gen double datetime = `date'*24*60*60*1000 + `time'
+format datetime %tcDDmonCCYY_HH:MM:SS
+
 
 end
+
+
+program define _addregion
+
+cap confirm var region
+if (_rc) gen region == ""
+
+preserve 
+datalibweb_inventory
+putmata I=(region countrycode countryname), replace
+restore
+
+levelsof countrycode if region == "", local(codes)
+foreach code of local codes {
+	mata: st_local("region", I[(selectindex(regexm(I[.,2], "`code'"))),1])
+	replace region = "`region'" if countrycode == "`code'"
+}
+
+end
+
+
+*-------------------- Generate time variables
+program define _gendatetime
+syntax , [date(string) time(string)]
+
+if ("`date'" == "") local date = c(current_date)
+if ("`time'" == "") local time = c(current_time)
+
+gen double date = date("`date'", "DMY")
+format date %td
+
+gen double time = clock("`time'", "hms")
+format time %tcHH:MM:SS
+
+// I do it this way to understand the relation
+gen double datetime = date*24*60*60*1000 + time  
+format datetime %tcDDmonCCYY_HH:MM:SS
+
+end
+
+
+
 
 
 
@@ -539,13 +714,12 @@ reported fgt0_npl	gini	comparability	tot_pop
 
 
 
-	local indir  "//wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
-	local outdir "//wbgfscifs01\GTSD\03.projects_corp\01.PEB\01.PEB_AM18\01.PEB_AM18_QA"
-	local ttldir "//gpvfile\GPV\Knowledge_Learning\PEB\02.tool_output\01.PovEcon_input"
-	local indic key
-	peb_exception load, outdir("`outdir'") ttldir("`ttldir'") /* 
-	*/ datetime(`datetime') indic("`indic'")
-	
-	
-	
-	
+local indir  "//wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
+local outdir "//wbgfscifs01\GTSD\03.projects_corp\01.PEB\01.PEB_AM18\01.PEB_AM18_QA"
+local ttldir "//gpvfile\GPV\Knowledge_Learning\PEB\02.tool_output\01.PovEcon_input"
+local indic key
+peb_exception load, outdir("`outdir'") ttldir("`ttldir'") /* 
+*/ datetime(`datetime') indic("`indic'")
+
+
+
