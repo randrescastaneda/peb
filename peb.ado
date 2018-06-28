@@ -26,6 +26,7 @@ VCdate(string)                 ///
 MAXdate                        ///
 trace(string)                  ///
 load  shape(string)            ///
+GROUPdata                      ///
 ]
 
 
@@ -85,6 +86,16 @@ qui {
 	==================================================*/
 	peb_exception load, outdir("`outdir'") ttldir("`ttldir'") /* 
 	*/ datetime(`datetime') indic("`indic'")
+	
+	
+	/*==================================================
+	Group data
+	==================================================*/
+	if ("`groupdata'" != "") {
+		peb_groupdata `indic', outdir("`outdir'") ttldir("`ttldir'") /* 
+		*/  indir("`indir'") 
+		exit 
+	}
 	
 	
 	/*==================================================
@@ -148,7 +159,8 @@ qui {
 		*------------------Include Group Data------------------------
 		*-------------------------------------------------------------
 		
-		
+		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
+		*/ update replace  
 		
 		*----------Save file
 		if (regexm("`trace'", "E|Ex")) set trace on
@@ -227,6 +239,9 @@ qui {
 		*/   date time  datetime case values
 		
 		
+		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
+		*/ update replace  
+		
 		
 		* Save data
 		rename filename source 
@@ -284,7 +299,7 @@ qui {
 		
 		replace countrycode="KSV" if countrycode=="XKX"
 		
-		replace case = "line" if case == "si_pov_nahc" 
+		replace case = "line"  if case == "si_pov_nahc" 
 		replace case = "popu"  if case == "sp_pop_totl" 
 		replace case = "gdppc" if case == "ny_gdp_pcap_pp_kd" 
 		replace case = "gnppc" if case == "ny_gnp_pcap_kd" 
@@ -434,6 +449,10 @@ qui {
 		keep id indicator countrycode year source /* 
 		*/   date time  datetime case values
 		
+			
+		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
+		*/ update replace  
+		
 		
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
 		
@@ -492,7 +511,7 @@ qui {
 		tempfile myear
 		save `myear'
 		
-		datalibweb, country(Support) year(2005) surveyid(Support_2005_CPI_v02_M) /* 
+		qui datalibweb, country(Support) year(2005) surveyid(Support_2005_CPI_v02_M) /* 
 		*/	filename("Final CPI PPP to be used.dta") type(GMDRAW) 
 		
 		local date: char _dta[note1]
@@ -519,7 +538,7 @@ qui {
 			gen values`=100*`ll'' = `ll'*cpi2011*icp2011
 		}
 		
-		_addregion
+		peb_addregion
 		
 		keep region countrycode year date time datetime values*
 		
@@ -538,7 +557,8 @@ qui {
 		order id indicator region countrycode year source /* 
 		*/   date time  datetime case values
 		
-		
+		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
+		*/ update replace  
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")	
 		
 	} // end of international poverty line to Local currency unit
@@ -646,26 +666,6 @@ format datetime %tcDDmonCCYY_HH:MM:SS
 
 
 end
-
-
-program define _addregion
-
-cap confirm var region
-if (_rc) gen region == ""
-
-preserve 
-datalibweb_inventory
-putmata I=(region countrycode countryname), replace
-restore
-
-levelsof countrycode if region == "", local(codes)
-foreach code of local codes {
-	mata: st_local("region", I[(selectindex(regexm(I[.,2], "`code'"))),1])
-	replace region = "`region'" if countrycode == "`code'"
-}
-
-end
-
 
 *-------------------- Generate time variables
 program define _gendatetime
