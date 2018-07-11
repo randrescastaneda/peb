@@ -46,13 +46,14 @@ qui {
 		save "`outdir'\02.input/peb_`indic'.dta", replace
 		noi disp in y "file /peb_`indic'.dta has been updated"
 		
-		cap export delimited using "`outdir'\05.tools\peb_`indic'.csv" , /* 
-		 */  replace 
+		cap drop __00*
+		cap export excel using "`outdir'\05.tools\peb_`indic'.xlsx" , /* 
+		 */  replace first(variable) sheet(peb_`indic')
 		
 		if (_rc) {
-			noi disp in red "Error updating /peb_`indic'.csv." _n /* 
+			noi disp in red "Error updating /peb_`indic'.xlsx." _n /* 
 			*/   "Fix and then resubmit by clicking " _c /* 
-			*/   `"{stata export delimited using "`outdir'\05.tools\peb_`indic'.csv" , replace:here}"' _n
+			*/   `"{stata export excel using "`outdir'\05.tools\peb_`indic'.xlsx" , replace first(variable) sheet(peb_`indic'):here}"' _n
 			error
 		}
 		else {
@@ -126,14 +127,17 @@ qui {
 			save "`outdir'\02.input/peb_master.dta", replace
 			noi disp in y "file /peb_master.dta has been updated"
 			
-			* CSV master file
+			* xlsx master file
 			
-			cap export delimited using "`outdir'\05.tools\peb_master.csv" , replace 
+			cap drop __00*
+			cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
+		 */  replace first(variable) sheet(peb_master)
+		
 			
 			if (_rc) {
-				noi disp in red "Error updating /peb_master.csv." _n /* 
+				noi disp in red "Error updating /peb_master.xlsx." _n /* 
 				*/   "Fix and then resubmit by clicking " _c /* 
-				*/   `"{stata export delimited using "`outdir'\05.tools\peb_master.csv" , replace:here}"' _n
+				*/   `"{stata export excel using "`outdir'\05.tools\peb_master.xlsx" , replace first(variable) sheet(peb_master):here}"' _n
 				error
 			}
 			else {
