@@ -26,13 +26,15 @@ VCdate(string)                 ///
 MAXdate                        ///
 trace(string)                  ///
 load  shape(string)            ///
-GROUPdata                      ///
+GROUPdata   pause              ///
 ]
 
 
 drop _all
 gtsd check peb
-pause on
+if ("`pause'" == "pause") pause on
+else pause off
+
 
 qui {
 	
@@ -259,7 +261,6 @@ qui {
 		* fix dates
 		_gendatetime_var date time
 		
-		rename country countrycode
 		
 		* include Population provided by the TTL
 		merge m:1 countrycode using "`outdir'/02.input/peb_exceptions.dta", /*  
@@ -279,11 +280,15 @@ qui {
 		keep countrycode year datetime date time case values
 		gen indicator = "npl"
 		gen source = "TTL"
+		drop if values == . // if TTL didn't provide info
+		
+		pause npl- before keepting max date
 		
 		bysort countrycode year case: egen double maxdate = max(datetime)
 		replace maxdate = cond(maxdate == datetime, 1, 0)
 		keep if maxdate == 1
 		
+		pause npl- after keeping max date
 		
 		gen id = countrycode + year + indicator + case
 		
@@ -304,6 +309,8 @@ qui {
 		replace case = "gdppc" if case == "ny_gdp_pcap_pp_kd" 
 		replace case = "gnppc" if case == "ny_gnp_pcap_kd" 
 		
+		pause after loading wdi information
+		
 		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
 		local vcvar = "`r(`vconfirm')'" 
 		keep if `vcvar' == 1
@@ -311,9 +318,13 @@ qui {
 		gen indicator = "npl"
 		gen source = "WDI"
 		
+		pause after controling for vc_
+		
 		bysort countrycode year case (datetime): egen double maxdate = max(datetime)
 		replace maxdate = cond(maxdate == datetime, 1, 0)
 		keep if maxdate == 1
+		
+		pause after keepging maxdate in wdi file 
 		
 		
 		tostring year, replace force 
@@ -327,9 +338,13 @@ qui {
 		append using `ttlfile'
 		keep if real(year) >= 2000
 		
+		pause before droping duplicates 
+		
 		duplicates tag id, gen(tag)
 		keep if (tag == 0 | (tag >0 & source == "TTL"))
 		drop tag 
+		
+		pause after droping duplicates 
 		
 		order id indicator countrycode year source /* 
 		*/   date time  datetime case values
