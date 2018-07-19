@@ -284,7 +284,7 @@ if ("`indic'" == "key") {
 	gen double datetime = date*24*60*60*1000 + time
 	format datetime %tcDDmonCCYY_HH:MM:SS
 	
-	drop _all__1 concate 
+	cap drop _all__1 concate 
 	rename b40 t60 , upper
 	rename (B40 T60) poor=zz
 	
