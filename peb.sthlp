@@ -18,7 +18,7 @@
 {phang}
 {bf:peb} {hline 2} <insert title here>
 
-{marker syntax}{...}
+{marker syntax}{...} 
 {title:Syntax}
 {p 8 17 2}
 {cmdab:peb}
