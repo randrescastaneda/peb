@@ -103,7 +103,8 @@ qui {
 	
 	*---------1.1: clean the file
 	if inlist("`indic'", "pov", "ine") {
-		use "`indir'\indicators_`indic'_long.dta", clear
+		* use "`indir'\indicators_`indic'_long.dta", clear
+		indicators `indic', load shape(long) `pause'
 		
 		* ---- Indicator-specific conditions
 		
@@ -178,7 +179,9 @@ qui {
 	*---------------2.1:
 	if ("`indic'" == "shp") {
 		
-		use "`indir'\indicators_`indic'_long.dta", clear
+		* use "`indir'\indicators_`indic'_long.dta", clear
+		indicators `indic', load shape(long) `pause'
+		
 		destring year, force replace // convert to values
 		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
 		local vcvar = "`r(`vconfirm')'" 
@@ -254,10 +257,13 @@ qui {
 	if ("`indic'" == "npl") {
 		
 		*-------------------- Data from TTL
-		use "`outdir'/02.input/peb_nplupdate.dta", clear
+		* use "`outdir'/02.input/peb_nplupdate.dta", clear
+		
+		peb nplupdate, load `pause'
 		* fix dates
 		_gendatetime_var date time
 		
+		pause npl - right after loading data 
 		
 		* include Population provided by the TTL
 		merge m:1 countrycode using "`outdir'/02.input/peb_exceptions.dta", /*  
@@ -296,7 +302,8 @@ qui {
 		save `ttlfile'
 		
 		*-------------------- Data from WDI
-		use "`indir'\indicators_wdi_long.dta", clear
+		* use "`indir'\indicators_wdi_long.dta", clear
+		indicators wdi, load shape(long) `pause'
 		keep if inlist(case, "si_pov_nahc","sp_pop_totl","ny_gdp_pcap_pp_kd","ny_gnp_pcap_kd")
 		
 		replace countrycode="KSV" if countrycode=="XKX"
@@ -360,8 +367,12 @@ qui {
 	
 	*--------------------
 	if ("`indic'" == "key") {
-		use "`outdir'/02.input/peb_keyupdate.dta", clear
+		* use "`outdir'/02.input/peb_keyupdate.dta", clear
+		tempfile shpfile
+		qui peb shpupdate, load `pause'
+		save `shpfile'
 		
+		qui peb keyupdate, load `pause'
 		_gendatetime_var date time
 		
 		replace countrycode = trim(countrycode)
@@ -406,7 +417,8 @@ qui {
 		
 		
 		* Load indicators file
-		use "`indir'\indicators_`indic'_wide.dta", clear
+		* use "`indir'\indicators_`indic'_wide.dta", clear
+		indicators key, load shape(wide) `pause'
 		
 		destring year, force replace // convert to values
 		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
@@ -421,9 +433,9 @@ qui {
 		tostring year, replace force
 		
 		* Filter by survey in case there is more than one
-		merge m:1 countrycode using "`outdir'/02.input/peb_shpupdate.dta", /* 
+		merge m:1 countrycode using `shpfile', /* 
 		*/	nogen keepusing(surveyname) keep(master match)
-		
+		pause key - after merging shpupdate file 
 		
 		duplicates tag countrycode precase, gen(tag)
 		keep if ((survname == surveyname & tag >0) |tag == 0)
@@ -433,6 +445,7 @@ qui {
 		merge 1:1 countrycode precase using `keyu', /* 
 		*/	keepusing(publish line2disp) keep(master match) nogen
 		
+		pause key - after merging temp keyu
 		* clean data 
 		replace line2disp = 190 if line2disp == . 
 		replace publish = "YES" if publish == ""
@@ -465,7 +478,7 @@ qui {
 		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
 		*/ update replace  
 		
-		
+		pause key - right before saving 
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
 		
 	}
@@ -478,7 +491,8 @@ qui {
 	
 	*--------------------
 	if ("`indic'" == "wup") {
-		use "`outdir'/02.input/peb_writeupupdate.dta", clear
+		* use "`outdir'/02.input/peb_writeupupdate.dta", clear
+		peb writeupupdate, load `pause'
 		missings dropvars, force
 		_gendatetime_var date time
 		
@@ -516,7 +530,8 @@ qui {
 	
 	*--------------------
 	if ("`indic'" == "plc") {  // Poverty line in Local Currency unite
-		use "`outdir'\02.input/peb_pov.dta", clear
+		* use "`outdir'\02.input/peb_pov.dta", clear
+		peb pov, load `pause'
 		destring year, replace
 		collapse (max) year, by(countrycode)
 		
