@@ -7,7 +7,7 @@ Creation Date:    29 May 2018 - 12:05:37
 Modification Date:   
 Do-file version:    01
 References:          
-Output:             csv dta
+Output:             xlsx and dta
 ==================================================*/
 
 /*==================================================
@@ -17,15 +17,12 @@ program define peb, rclass
 version 13
 
 syntax anything(name=indic id="indicator"), [ ///
-CALCulate                      ///
 indir(string)                  ///
 outdir(string)                 ///
 ttldir(string)                 ///
-replace *                      /// 
 VCdate(string)                 ///
-MAXdate                        ///
 trace(string)                  ///
-load  shape(string)            ///
+load                           ///
 GROUPdata   pause              ///
 ]
 
@@ -48,14 +45,14 @@ qui {
 	
 	
 	* vintage control
-	if ("`vcdate'" == "" & "`maxdate'" == "") local maxdate "maxdate"
-	if ("`vcdate'"  != "") local vconfirm "vcdate"
-	if ("`maxdate'" != "") local vconfirm "maxdate"
-	if ("`vcdate'"  != "" & "`maxdate'" != "" ) {
-		noi disp as err "you must select either {cmd:vcdate()} or {cmd:maxdate}."
-		error
+	if ("`vcdate'" == "" ) {
+		local vconfirm "maxdate"
+		local maxdate maxdate	
 	}
-	
+	else {
+		local vconfirm "vcdate"
+		local maxdate ""
+	}
 	
 	* dates
 	local date = date("`c(current_date)'", "DMY")  // %tdDDmonCCYY
@@ -464,7 +461,7 @@ qui {
 		keep id indicator countrycode year source /* 
 		*/   date time  datetime case values
 		
-			
+		
 		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
 		*/ update replace  
 		
@@ -672,19 +669,19 @@ peb_exception load, outdir("`outdir'") ttldir("`ttldir'") /*
 
 
 
-	/*==================================================
-	
-	==================================================*/
-	
-	*--------------------
-	
-	*--------------------
-	
-	/*==================================================
-	
-	==================================================*/
-	
-	*--------------------
-	
-	*--------------------
-	
+/*==================================================
+
+==================================================*/
+
+*--------------------
+
+*--------------------
+
+/*==================================================
+
+==================================================*/
+
+*--------------------
+
+*--------------------
+
