@@ -103,6 +103,10 @@ qui {
 	
 	*---------1.1: clean the file
 	if inlist("`indic'", "pov", "ine") {
+		peb comparable, load `pause'
+		tempfile comparafile
+		save `comparafile'
+	
 		* use "`indir'\indicators_`indic'_long.dta", clear
 		indicators `indic', load shape(long) `pause'
 		
@@ -116,7 +120,7 @@ qui {
 		}
 		
 		* Comparable years
-		merge m:1 countrycode year welfarevar using "`outdir'/02.input/peb_comparable.dta", /*  
+		merge m:1 countrycode year welfarevar using `comparafile', /*  
 		*/  keep(match) keepusing(comparable) nogen
 		
 		destring comparable, replace force
@@ -128,15 +132,29 @@ qui {
 		local vcvar = "`r(`vconfirm')'" 
 		keep if `vcvar' == 1
 		
+		*------- homogenize welfare type
+		replace welftype = "CONS" if !inlist(welftype, "INC", "")
+		replace welftype = "CONS" if regexm(welfarevar, "pcexp")
+		replace welftype = "INC"  if regexm(welfarevar, "pcinc")
+		
+		
 		*------- remove duplicates 
 		* by module
-		duplicates tag countrycode year case , gen(tag)
-		keep if (tag ==  0| (tag == 1 & module == "ALL"))
+		sort countrycode year case type welftype
+		duplicates tag countrycode year case welftype type, gen(tag)
+		pause `indic' - after creating tag of replicates 
+		keep if (tag ==  0| (tag >= 1 & module == "ALL"))  // All prevails over GPWG 
 		drop tag
+		pause `indic' - after dropping replicates and tag
 		
 		* by survey. 
-		duplicates report countrycode year case 
+		duplicates tag countrycode year case welftype, gen(tag)
+		keep if (tag ==  0| (tag >= 1 & type == "GPWG2")) // GPWG2 prevails over GMD
+		drop tag
 		
+		duplicates tag countrycode year case, gen(tag)
+		replace case = case + "c" if (tag == 1 & welftype == "CONS")
+		drop tag
 		
 		/* NOTE: we need to include here the default survey for each 
 		country in case there are more than one.  */
@@ -279,10 +297,10 @@ qui {
 		replace case = "pttl" if case == "nu_poor_npl"
 		destring values, replace force
 		
+		pause `indic' - before droping variables
 		
-		keep countrycode year datetime date time case values
+		keep countrycode year datetime date time case values source
 		gen indicator = "npl"
-		gen source = "TTL"
 		drop if values == . // if TTL didn't provide info
 		
 		pause npl- before keepting max date
@@ -345,7 +363,7 @@ qui {
 		pause before droping duplicates 
 		
 		duplicates tag id, gen(tag)
-		keep if (tag == 0 | (tag >0 & source == "TTL"))
+		keep if (tag == 0 | (tag >0 & source != "WDI"))
 		drop tag 
 		
 		pause after droping duplicates 
