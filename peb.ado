@@ -22,7 +22,7 @@ outdir(string)                 ///
 ttldir(string)                 ///
 VCdate(string)                 ///
 trace(string)                  ///
-load                           ///
+load  shpupdate                ///
 GROUPdata   pause              ///
 ]
 
@@ -196,6 +196,11 @@ qui {
 	==================================================*/
 	*---------------2.1:
 	if ("`indic'" == "shp") {
+		
+		if ("`shpupdate'" == "shpupdate") {
+			peb_shpupdate, outdir("`outdir'") ttldir("`ttldir'")
+		}
+		
 		
 		* use "`indir'\indicators_`indic'_long.dta", clear
 		indicators `indic', load shape(long) `pause'
