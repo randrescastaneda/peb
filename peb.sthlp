@@ -45,11 +45,14 @@ for debugging purposes. See {help pause}{p_end}
 {syntab:Advanced}
 {synopt:{opt vc:date(string)}} Vintage control date of input file from pre-calculated 
 indicators. see {help indicators##vc_vars:indicators}{p_end}
+{synopt:{opt shpupdate}} update shared prosperity spell from Excel file provided by 
+Minh that has been completed by regional focal points. Only works within instruction 
+{it:shp}{p_end}
 {synopt:{opt indir(string)}} Alternative directory to indicators input{p_end}
 {synopt:{opt outdir(string)}} Alternative directory to PEB folder. Modify directly in 
 the ado-file when a new round of the PEB comes in time.{p_end}
 {synopt:{opt ttldir(string)}} Alternative directory to Exceptions database. This 
-does not need to change from one round to the oher.{p_end}
+does not need to change from one round to the other.{p_end}
 {synoptline}
 {p2colreset}{...}
 {p 4 6 2}
