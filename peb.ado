@@ -336,7 +336,7 @@ qui {
 		ren region_sp region
 		ren period year
 		gen source=""
-		gen comparable=""
+		gen comparable = . 
 		
 		format values %15.10f
 		replace values=values/100
@@ -351,7 +351,7 @@ qui {
 		* 
 		
 		* Save data
-		rename filename source 
+		
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
 		 */
 		
