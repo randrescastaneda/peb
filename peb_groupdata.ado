@@ -21,10 +21,12 @@ CALCulate                      ///
 indir(string)                  ///
 outdir(string)                 ///
 ttldir(string)                 ///
+pause                          ///
 ]
 
 
-pause on 
+if ("`pause'" != "") pause on 
+else                 pause off
 local indir "\\wbntst01.worldbank.org\TeamDisk\GPWG\datalib\_global_pov_CPB_Spring2018\template\sent"
 
 local infile "PEB_template@\`tver'.xlsm"
@@ -235,14 +237,14 @@ if ("`indic'" == "shp") {
 	replace case = "pre" if case == "sp_premium"
 	
 	gen indicator = "shp"
-	gen filename  = "Group Data"
+	gen source  = "Group Data"
 	gen id = countrycode + indicator + case
 	
-	keep id indicator region countrycode year filename case /* 
+	keep id indicator region countrycode year source case /* 
 	*/  date time datetime values
 	
 	
-	order id indicator region countrycode year filename /* 
+	order id indicator region countrycode year source /* 
 	*/   date time  datetime case values
 	
 }
@@ -307,9 +309,14 @@ if ("`indic'" == "key") {
 	gen indicator = "key"
 	gen source = "Group Data"
 	
+	pause group data key - Before creating variable id
+	
+	/* 
 	gen id = cond(regexm(case, "^[BT]"), /* 
 	*/	          countrycode + indicator + precase + case, /* 
 	*/            countrycode + indicator + precase + substr(case, 4,.))
+	*/
+	gen id = countrycode + indicator + precase + case, 
 	
 	replace case = precase+case
 	tostring year, replace force
@@ -320,7 +327,7 @@ if ("`indic'" == "key") {
 	keep id indicator countrycode year source /* 
 	*/   date time  datetime case values
 	
-	keep if regexm(case,"B|T|190")
+	* keep if regexm(case,"B|T|190")
 }
 
 

@@ -35,6 +35,10 @@ else pause off
 
 qui {
 	
+	cap which dirlist
+	if (_rc) ssc install dirlist
+	
+	
 	/*==================================================
 	Consistency Check
 	==================================================*/
@@ -43,6 +47,8 @@ qui {
 	if ("`outdir'" == "") local outdir "//wbgfscifs01\GTSD\03.projects_corp\01.PEB\01.PEB_AM18\01.PEB_AM18_QA"
 	if ("`ttldir'" == "") local ttldir "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB\AM2018\02.tool_output\01.PovEcon_input"
 	
+	if regexm("`indir'", "(.*\\)([a-zA-Z0-9\.]+)$") /* 
+  */	     local spdir = regexs(1)+"02.SharedProsperity"
 	
 	* vintage control
 	if ("`vcdate'" == "" ) {
@@ -92,7 +98,7 @@ qui {
 	==================================================*/
 	if ("`groupdata'" != "") {
 		peb_groupdata `indic', outdir("`outdir'") ttldir("`ttldir'") /* 
-		*/  indir("`indir'") 
+		*/  indir("`indir'")  `pause'
 		exit 
 	}
 	
@@ -106,7 +112,7 @@ qui {
 		peb comparable, load `pause'
 		tempfile comparafile
 		save `comparafile'
-	
+		
 		* use "`indir'\indicators_`indic'_long.dta", clear
 		indicators `indic', load shape(long) `pause'
 		
@@ -201,76 +207,175 @@ qui {
 			peb_shpupdate, outdir("`outdir'") ttldir("`ttldir'")
 		}
 		
+		pause shp - load GDSP circa 2010-2015
+		dirlist "`spdir'\GDSP circa 2010-2015.xlsx"
+		local ftimes = "`r(ftimes)'"
+		local fdates = "`r(fdates)'"
+	
+		import excel using "`spdir'/GDSP circa 2010-2015.xlsx", clear /* 
+		*/                 cellra("A6:N97") first sheet("GPSP 2010-2015") 
 		
-		* use "`indir'\indicators_`indic'_long.dta", clear
-		indicators `indic', load shape(long) `pause'
+		destring _all, replace
 		
-		destring year, force replace // convert to values
-		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
-		local vcvar = "`r(`vconfirm')'" 
-		keep if `vcvar' == 1
+		ren _all, lower
+		ren countryname country
+		
+		keep	region code country period type growthb40 growthtotal
+		order	region code country period type growthb40 growthtotal
+		for var region code country period type growthb40 growthtotal \ any A B C D E F G : ren X Y
+		isid B
+		tempfile _11
+		save `_11'
+		
+		pause shp - load Draft SP SM2018@3.xlsx
+		import excel using "`spdir'/Draft SP SM2018@3.xlsx", clear cellra("A1:H128") first
+		replace SPSM2018="Yes" if code=="TUN" | code=="TZA"
+		keep if trim(SPSM2018)=="Yes"
+		gen country=""
+		keep	region code country period type growthb40 growthtotal
+		order	region code country period type growthb40 growthtotal
+		for var region code country period type growthb40 growthtotal \ any A B C D E F G : ren X Y
+		isid B
+		tempfile _10
+		save `_10'
+		
+		pause shp - load GDSP circa 2009-14 (Nov 28 2017).xlsx
+		import excel using "`spdir'/GDSP circa 2009-14 (Nov 28 2017).xlsx", clear cellra("A6:G100")
+		isid B
+		tempfile _9
+		save `_9'
+		pause shp - load GDSP circa 2008-13 (08_10_16_UPDATE v2).xlsx
+		import excel using "`spdir'/GDSP circa 2008-13 (08_10_16_UPDATE v2).xlsx", clear cellra("A6:G88")
+		for var F G : replace X=X*100
+		isid B
+		tempfile _8
+		save `_8'
+		
+		pause shp - load GDSP circa 2007-12 (10_19_15_UPDATE) FY15.xls
+		import excel using "`spdir'/GDSP circa 2007-12 (10_19_15_UPDATE) FY15.xls", clear cellra("A6:G99")
+		replace A="EAP" if A=="East Asia & Pacific"
+		replace A="ECA" if A=="Europe & Central Asia"
+		replace A="LAC" if A=="Latin America & Caribbean"
+		replace A="MNA" if A=="Middle East & North Africa"
+		replace A="SAR" if A=="South Asia"
+		replace A="SSA" if A=="Sub-Saharan Africa"
+		
+		for var F G : replace X=X*100
+		isid B
+		tempfile _7
+		save `_7'
+		
+		pause shp - load GDSP circa 2006-2011_Final FY14.xlsx
+		import excel using "`spdir'/GDSP circa 2006-2011_Final FY14.xlsx", clear cellra("A7:G78") sh("GDSP_Pp")	//faltan 3 digits code
+		replace A="EAP" if A=="East Asia & Pacific"
+		replace A="ECA" if A=="Europe & Central Asia"
+		replace A="LAC" if A=="Latin America & Caribbean"
+		replace A="MNA" if A=="Middle East & North Africa"
+		replace A="SAR" if A=="South Asia"
+		replace A="SSA" if A=="Sub-Saharan Africa"
+		
+		pause shp - merge all ShP temporal files
+		merge 1:1 B using `_7' , update replace gen(_me67)
+		merge 1:1 B using `_8' , update replace gen(_me678)
+		merge 1:1 B using `_9' , update replace gen(_me6789)
+		merge 1:1 B using `_10', update replace gen(_me67890)
+		merge 1:1 B using `_11', update replace gen(_me678901)
+		ren A region_sp
+		ren B code
+		ren D period
+		ren F growthb40
+		ren G growthtotal
+		
+		*import exc using "${SP_final}", sheet(updatedb40) clear first
+		
+		pause shp - fix data
+		isid code
+		*gsort -gr_b40_3
+		gsort -growthb40
+		ren _all, lower
+		cap clonevar code=wbcode
+		isid code							// making sure there is only one spell per country
+		
+		gen year0 = substr(period,1,4)
+		gen year1 = substr(period,-4,4)
+		drop if year1 == year0 				// exclude countries without SP spell
+		drop if mi(growthb40)
+		
+		levelsof code, local(spnats)		// countries with sp data 
+		foreach c of local spnats {
+			qui levelsof year0 if code=="`c'", local(`c'_t0) clean
+			qui levelsof year1 if code=="`c'", local(`c'_t1) clean
+			di in yellow "`c':``c'_t0':``c'_t1'"
+		}
+		
+		* add top10 and top60 for the future 
+		cap gen double sp_premium=growthb40-growthtotal
+		cap clonevar region_sp=region
+		*for var growth* sp_premium : replace X=X*1
+		keep	region_sp code period sp_premium growthb40 growthtotal
+		order	region_sp code period sp_premium growthb40 growthtotal
 		
 		
-		* Merge with Exceptions
-		merge m:1 countrycode using "`outdir'/02.input/peb_shpupdate.dta", /* 
-		*/   keep(match) nogen
-		gen ytemp = yeart0 + "-" + yeart1
-		destring yeart0 yeart1, replace force
+		***This part needs to be checked in the exceptions file START
+		count
+		loc g=r(N)+1
+		set obs `g'
+		replace region_sp="SSA" in `g' //
+		replace code="ZWE" in `g'
+		replace period="2011-2017" in `g'
+		***This part needs to be checked in the exceptions file END
 		
-		* keep relevant data
-		keep if inlist(year, yeart0, yeart1)
-		keep if inlist(welfarevar, welfaret0, welfaret1)
-		keep if inlist(case, "b40", "mean")
-		* filter by module
-		duplicates tag countrycode survname year case, gen(tag)
-		keep if (tag ==  0| (tag > 0 & module == "ALL"))
-		drop tag
+		keep if !mi(code)
+		pause shp - gen date and time
 		
-		* Filter survey
-		duplicates tag countrycode year case surveyname, gen(tag)
-		keep if ((survname == surveyname & tag >0) |tag == 0)
-		drop tag
+		gen double date = date("`fdates'", "MDY")
+		format date %td
+
+		gen double time = clock("`ftimes'", "hm")
+		format time %tcHH:MM:SS
+
+		// I do it this way to understand the relation
+		gen double datetime = date*24*60*60*1000 + time  
+		format datetime %tcDDmonCCYY_HH:MM:SS
 		
+		*tostring region_sp-growthtotal, replace force
 		
-		* annualized growth
-		bysort countrycode survname case (year): gen growth = /* 
-		*/  (values[_n]/values[_n-1])^(1/(year[_n]-year[_n-1])) -1 
+		**********************************************************************	
+		** In PEB AM2018 "master" worksheet format	
+		rename (sp_premium growthb40 growthtotal) (pre b40 tot)
+		rename (pre b40 tot) values=
 		
-		keep if growth != .
+		reshape long values, i(region_sp code period date time) j(case) s 
+		*destring _all, replace
 		
-		* expand to add premium
-		gen expand = cond(case == "b40", 2, 1)
-		expand expand, gen(tag)
-		replace case = "pre" if tag ==1
+		gen indicator="shp"
+		ren code countrycode
+		gen id=countrycode+indicator+case
+		ren region_sp region
+		ren period year
+		gen source=""
+		gen comparable = . 
 		
-		* calculate premium
-		bysort countrycode (tag case): replace growth = /* 
-		*/ growth[_n-2] - growth[_n-1] if tag ==1
+		format values %15.10f
+		replace values=values/100
 		
-		* Create ID and keep relevant data
-		
-		gen indicator = "`indic'"
-		
-		replace case = "tot" if case == "mean"
-		gen id = countrycode + indicator + case
-		
-		
-		keep id indicator region countrycode ytemp filename case /* 
-		*/  date time datetime growth
-		
-		rename (ytemp growth) (year values)
-		
-		order id indicator region countrycode year filename /* 
-		*/   date time  datetime case values
+		local v2keep id region countrycode year source date time /* 
+		 */   datetime case values indicator comparable
+		order `v2keep'
+		keep `v2keep'
+		compress
 		
 		
 		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
 		*/ update replace  
 		
+		* 
 		
 		* Save data
-		rename filename source 
+		pause shp - before saving 
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
+		 */
+		
 	}
 	
 	/*==================================================
@@ -373,6 +478,12 @@ qui {
 		
 		pause after droping duplicates 
 		
+		* Fix Gini to go from 0 to 1
+		 
+		replace values = value*100 if /* 
+		 */  (mod(values, 10) > 0 & mod(values, 10) < 1 & case == "gini")
+		
+		
 		order id indicator countrycode year source /* 
 		*/   date time  datetime case values
 		
@@ -421,6 +532,7 @@ qui {
 		
 		
 		* create variable for poverty line to use
+		pause key - before preserve
 		preserve 
 		keep if regexm(indicator, "^Poverty line") 
 		gen line2disp = cond(regexm(publish, "^[Uu]p"), 550,  /* 
@@ -428,16 +540,19 @@ qui {
 		keep countrycode line2disp
 		tempfile lined
 		save `lined'
+		pause key - before restore
 		restore
 		
 		merge  m:1 countrycode using `lined', nogen
+		pause key - after merge with lined
+		
 		drop if regexm(indicator, "^Poverty line") 
 		
 		
 		* Save temporal file
 		tempfile keyu
 		save `keyu', replace
-		
+		pause key - after saving keyu
 		
 		* Load indicators file
 		* use "`indir'\indicators_`indic'_wide.dta", clear
@@ -472,12 +587,13 @@ qui {
 		* clean data 
 		replace line2disp = 190 if line2disp == . 
 		replace publish = "YES" if publish == ""
-		drop if publish == "NO"
+		
 		
 		reshape long values, i(countrycode  precase) /* 
 		*/     j(case) string
 		
-		keep if (regexm(case, "^[BT]") | real(substr(case, 1,3)) == line2disp)
+		pause key - Before dropping observations.
+		* keep if (regexm(case, "^[BT]") | real(substr(case, 1,3)) == line2disp)
 		
 		
 		* Organize before save
@@ -485,10 +601,14 @@ qui {
 		gen indicator = "key"
 		rename filename source
 		
+		/* 
 		gen id = cond(regexm(case, "^[BT]"), /* 
 	  */	          countrycode + indicator + precase + case, /* 
 		*/            countrycode + indicator + precase + substr(case, 4,.))
+		*/
 		
+		gen id = countrycode + indicator + precase + case 
+		 
 		replace case = precase + case
 		
 		order id indicator countrycode year source /* 
@@ -708,8 +828,68 @@ peb_exception load, outdir("`outdir'") ttldir("`ttldir'") /*
 
 
 /*==================================================
-
+Shared Prosperity using data from indicators.ado
 ==================================================*/
+* use "`indir'\indicators_`indic'_long.dta", clear
+indicators `indic', load shape(long) `pause'
+
+destring year, force replace // convert to values
+noi peb_vcontrol, `maxdate' vcdate(`vcdate')
+local vcvar = "`r(`vconfirm')'" 
+keep if `vcvar' == 1
+
+
+* Merge with Exceptions
+merge m:1 countrycode using "`outdir'/02.input/peb_shpupdate.dta", /* 
+*/   keep(match) nogen
+gen ytemp = yeart0 + "-" + yeart1
+destring yeart0 yeart1, replace force
+
+* keep relevant data
+keep if inlist(year, yeart0, yeart1)
+keep if inlist(welfarevar, welfaret0, welfaret1)
+keep if inlist(case, "b40", "mean")
+* filter by module
+duplicates tag countrycode survname year case, gen(tag)
+keep if (tag ==  0| (tag > 0 & module == "ALL"))
+drop tag
+
+* Filter survey
+duplicates tag countrycode year case surveyname, gen(tag)
+keep if ((survname == surveyname & tag >0) |tag == 0)
+drop tag
+
+
+* annualized growth
+bysort countrycode survname case (year): gen growth = /* 
+*/  (values[_n]/values[_n-1])^(1/(year[_n]-year[_n-1])) -1 
+
+keep if growth != .
+
+* expand to add premium
+gen expand = cond(case == "b40", 2, 1)
+expand expand, gen(tag)
+replace case = "pre" if tag ==1
+
+* calculate premium
+bysort countrycode (tag case): replace growth = /* 
+*/ growth[_n-2] - growth[_n-1] if tag ==1
+
+* Create ID and keep relevant data
+
+gen indicator = "`indic'"
+
+replace case = "tot" if case == "mean"
+gen id = countrycode + indicator + case
+
+
+keep id indicator region countrycode ytemp filename case /* 
+*/  date time datetime growth
+
+rename (ytemp growth) (year values)
+
+order id indicator region countrycode year filename /* 
+*/   date time  datetime case values
 
 *--------------------
 
