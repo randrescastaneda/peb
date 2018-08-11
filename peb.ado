@@ -98,7 +98,7 @@ qui {
 	==================================================*/
 	if ("`groupdata'" != "") {
 		peb_groupdata `indic', outdir("`outdir'") ttldir("`ttldir'") /* 
-		*/  indir("`indir'") 
+		*/  indir("`indir'")  `pause'
 		exit 
 	}
 	
@@ -372,7 +372,7 @@ qui {
 		* 
 		
 		* Save data
-		
+		pause shp - before saving 
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
 		 */
 		
@@ -526,6 +526,7 @@ qui {
 		
 		
 		* create variable for poverty line to use
+		pause key - before preserve
 		preserve 
 		keep if regexm(indicator, "^Poverty line") 
 		gen line2disp = cond(regexm(publish, "^[Uu]p"), 550,  /* 
@@ -533,16 +534,19 @@ qui {
 		keep countrycode line2disp
 		tempfile lined
 		save `lined'
+		pause key - before restore
 		restore
 		
 		merge  m:1 countrycode using `lined', nogen
+		pause key - after merge with lined
+		
 		drop if regexm(indicator, "^Poverty line") 
 		
 		
 		* Save temporal file
 		tempfile keyu
 		save `keyu', replace
-		
+		pause key - after saving keyu
 		
 		* Load indicators file
 		* use "`indir'\indicators_`indic'_wide.dta", clear
@@ -577,12 +581,13 @@ qui {
 		* clean data 
 		replace line2disp = 190 if line2disp == . 
 		replace publish = "YES" if publish == ""
-		drop if publish == "NO"
+		
 		
 		reshape long values, i(countrycode  precase) /* 
 		*/     j(case) string
 		
-		keep if (regexm(case, "^[BT]") | real(substr(case, 1,3)) == line2disp)
+		pause key - Before dropping observations.
+		* keep if (regexm(case, "^[BT]") | real(substr(case, 1,3)) == line2disp)
 		
 		
 		* Organize before save
@@ -590,10 +595,14 @@ qui {
 		gen indicator = "key"
 		rename filename source
 		
+		/* 
 		gen id = cond(regexm(case, "^[BT]"), /* 
 	  */	          countrycode + indicator + precase + case, /* 
 		*/            countrycode + indicator + precase + substr(case, 4,.))
+		*/
 		
+		gen id = countrycode + indicator + precase + case 
+		 
 		replace case = precase + case
 		
 		order id indicator countrycode year source /* 

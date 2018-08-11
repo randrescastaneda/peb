@@ -57,7 +57,7 @@ qui {
 			error
 		}
 		else {
-			noi disp in y "file peb_`indic'.csv updated successfully"
+			noi disp in y "file peb_`indic'.xlsx updated successfully"
 		}
 		
 		exit
@@ -73,7 +73,8 @@ qui {
 	
 	cap confirm new file "`outdir'\02.input/peb_`indic'.dta"
 	if (_rc) {
-		use "`outdir'\02.input/peb_`indic'.dta", clear
+		* use "`outdir'\02.input/peb_`indic'.dta", clear
+		qui peb `indic', load
 		cap rename filename source
 		merge 1:1 `mergevar' using `indicfile', replace update nogen
 		drop if values == .
@@ -98,7 +99,8 @@ qui {
 		
 		*** ---- Update master file--------***
 		if (`rcmaster' == 0) { // If master DOES exist
-			use "`outdir'\02.input/peb_master.dta", clear
+			* use "`outdir'\02.input/peb_master.dta", clear
+			qui peb master, load
 			cap rename filename source
 			merge 1:1 `mergevar' indicator using "`outdir'\02.input/peb_`indic'.dta", /* 
 			*/       replace update nogen
@@ -141,7 +143,7 @@ qui {
 				error
 			}
 			else {
-				noi disp in y "file peb_master.csv updated successfully"
+				noi disp in y "file peb_master.xlsx updated successfully"
 			}
 			
 		} // End of master file update
