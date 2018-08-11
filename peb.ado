@@ -35,6 +35,10 @@ else pause off
 
 qui {
 	
+	cap which dirlist
+	if (_rc) ssc install dirlist
+	
+	
 	/*==================================================
 	Consistency Check
 	==================================================*/
@@ -204,6 +208,10 @@ qui {
 		}
 		
 		pause shp - load GDSP circa 2010-2015
+		dirlist "`spdir'\GDSP circa 2010-2015.xlsx"
+		local ftimes = "`r(ftimes)'"
+		local fdates = "`r(fdates)'"
+	
 		import excel using "`spdir'/GDSP circa 2010-2015.xlsx", clear /* 
 		*/                 cellra("A6:N97") first sheet("GPSP 2010-2015") 
 		
@@ -319,7 +327,17 @@ qui {
 		
 		keep if !mi(code)
 		pause shp - gen date and time
-		_gendatetime
+		
+		gen double date = date("`fdates'", "MDY")
+		format date %td
+
+		gen double time = clock("`ftimes'", "hm")
+		format time %tcHH:MM:SS
+
+		// I do it this way to understand the relation
+		gen double datetime = date*24*60*60*1000 + time  
+		format datetime %tcDDmonCCYY_HH:MM:SS
+		
 		*tostring region_sp-growthtotal, replace force
 		
 		**********************************************************************	
@@ -341,7 +359,10 @@ qui {
 		format values %15.10f
 		replace values=values/100
 		
-		order id region countrycode year source date time datetime case values indicator comparable
+		local v2keep id region countrycode year source date time /* 
+		 */   datetime case values indicator comparable
+		order `v2keep'
+		keep `v2keep'
 		compress
 		
 		
