@@ -479,10 +479,10 @@ qui {
 		pause after droping duplicates 
 		
 		* Fix Gini to go from 0 to 1
-		/* 
+		 
 		replace values = value*100 if /* 
 		 */  (mod(values, 10) > 0 & mod(values, 10) < 1 & case == "gini")
-		 */
+		
 		
 		order id indicator countrycode year source /* 
 		*/   date time  datetime case values
