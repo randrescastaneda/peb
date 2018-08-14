@@ -78,6 +78,11 @@ qui {
 		cap rename filename source
 		merge 1:1 `mergevar' using `indicfile', replace update nogen
 		drop if values == .
+		
+		if inlist("`indic'", "pov", "ine") {
+			peb_exception apply, outdir("`outdir'")				
+		}
+		
 	}
 	
 	cap noi datasignature confirm using /* 
