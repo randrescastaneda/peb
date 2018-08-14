@@ -22,7 +22,7 @@ outdir(string)                 ///
 ttldir(string)                 ///
 VCdate(string)                 ///
 trace(string)                  ///
-load  shpupdate                ///
+load  shpupdate   force        ///
 GROUPdata   pause              ///
 ]
 
@@ -30,7 +30,7 @@ GROUPdata   pause              ///
 drop _all
 gtsd check peb
 if ("`pause'" == "pause") pause on
-else pause off
+else                      pause off
 
 
 qui {
@@ -201,7 +201,7 @@ qui {
 		set trace off
 		
 		rename filename source 
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'
 		
 	} // end of pov and ine
 	
@@ -382,7 +382,7 @@ qui {
 		
 		* Save data
 		pause shp - before saving 
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'
 		 */
 		
 	}
@@ -435,6 +435,7 @@ qui {
 		order id indicator countrycode year source /* 
 		*/   date time  datetime case values
 		
+		gen ttl = 1
 		tempfile ttlfile
 		save `ttlfile'
 		
@@ -455,6 +456,8 @@ qui {
 		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
 		local vcvar = "`r(`vconfirm')'" 
 		keep if `vcvar' == 1
+		
+		drop regioncode vc_13jun2018 iso2code 
 		
 		gen indicator = "npl"
 		gen source = "WDI"
@@ -482,7 +485,7 @@ qui {
 		pause before droping duplicates 
 		
 		duplicates tag id, gen(tag)
-		keep if (tag == 0 | (tag >0 & source != "WDI"))
+		keep if (tag == 0 | (tag >0 & ttl == 1 ))
 		drop tag 
 		
 		pause after droping duplicates 
@@ -492,6 +495,7 @@ qui {
 		replace values = value*100 if /* 
 		 */  (mod(values, 10) > 0 & mod(values, 10) < 1 & case == "gini")
 		
+		drop if values == .
 		
 		order id indicator countrycode year source /* 
 		*/   date time  datetime case values
@@ -499,7 +503,8 @@ qui {
 		keep id indicator countrycode year source /* 
 		*/   date time  datetime case values
 		
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
+		pause npl - Right before saving
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'
 		
 		
 	} // End of National POverty lines and Macro indicators. 
@@ -635,7 +640,7 @@ qui {
 		*/ update replace  
 		
 		pause key - right before saving 
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'
 		
 	}
 	
@@ -675,7 +680,7 @@ qui {
 		order `keepvars'
 		keep `keepvars'
 		
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'
 	}
 	
 	*--------------------
@@ -742,7 +747,7 @@ qui {
 		
 		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
 		*/ update replace  
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")	
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")	 `force'
 		
 	} // end of international poverty line to Local currency unit
 }
