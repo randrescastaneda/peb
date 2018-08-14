@@ -420,12 +420,13 @@ qui {
 		
 		keep countrycode year datetime date time case values source
 		gen indicator = "npl"
-		drop if values == . // if TTL didn't provide info
 		
 		pause npl- before keepting max date
 		
 		bysort countrycode year case: egen double maxdate = max(datetime)
 		replace maxdate = cond(maxdate == datetime, 1, 0)
+		
+		drop if inlist(values, 0, .)  // if TTL didn't provide info
 		keep if maxdate == 1
 		
 		pause npl- after keeping max date
@@ -438,6 +439,8 @@ qui {
 		gen ttl = 1
 		tempfile ttlfile
 		save `ttlfile'
+		
+		pause npl- after saving ttlfile
 		
 		*-------------------- Data from WDI
 		* use "`indir'\indicators_wdi_long.dta", clear
@@ -456,8 +459,9 @@ qui {
 		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
 		local vcvar = "`r(`vconfirm')'" 
 		keep if `vcvar' == 1
-		
-		drop regioncode vc_13jun2018 iso2code 
+		drop region
+		rename regioncode region 
+		drop  vc_13jun2018 iso2code 
 		
 		gen indicator = "npl"
 		gen source = "WDI"
