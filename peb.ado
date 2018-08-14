@@ -125,6 +125,9 @@ qui {
 			tostring case, replace force
 		}
 		
+		* T-1 for Eusilc data
+		replace year = strofreal(real(year) -1) if (regexm(filename, "EU\-"))
+		
 		* Comparable years
 		merge m:1 countrycode year welfarevar using `comparafile', /*  
 		*/  keep(match) keepusing(comparable) nogen
@@ -562,6 +565,10 @@ qui {
 		* Load indicators file
 		* use "`indir'\indicators_`indic'_wide.dta", clear
 		indicators key, load shape(wide) `pause'
+		
+		* T-1 for Eusilc data
+		replace year = strofreal(real(year) -1) if (regexm(filename, "EU\-"))
+		
 		
 		destring year, force replace // convert to values
 		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
