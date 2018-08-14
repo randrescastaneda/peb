@@ -11,9 +11,14 @@ Creation Date:     4 Jun 2018 - 14:15:15
 program define peb_save, rclass
 
 syntax anything(name=indic id=indicator), [  ///
-outdir(string)                  ///
+outdir(string)   pause          ///
 datetime(numlist)   force       ///
 ]
+
+if ("`pause'" == "pause") pause on
+else                      pause off
+
+
 
 * Indicator-specific conditions
 qui {
@@ -74,13 +79,16 @@ qui {
 	cap confirm new file "`outdir'\02.input/peb_`indic'.dta"
 	if (_rc) {
 		* use "`outdir'\02.input/peb_`indic'.dta", clear
-		qui peb `indic', load
+		qui peb `indic', load `pause' 
 		cap rename filename source
-		merge 1:1 `mergevar' using `indicfile', replace update nogen
-		drop if inlist(values, ., 0)
 		
+		cap drop _merge
+		merge 1:1 `mergevar' using `indicfile', replace update  nogen
+		pause save - right after merge with indicators file
+		
+		drop if inlist(values, ., 0)
 		if inlist("`indic'", "pov", "ine") {
-			peb_exception apply, outdir("`outdir'")				
+			peb_exception apply, outdir("`outdir'") `pause'	
 		}
 		peb_addregion
 	}
@@ -90,7 +98,7 @@ qui {
 	local rcindic  = _rc
 	if (`rcindic' != 0) {
 		noi disp in y "detailed report of changes in peb_`indic'.dta"
-		noi datasignature report
+		cap noi datasignature report
 	}
 	
 	
@@ -105,13 +113,17 @@ qui {
 		*** ---- Update master file--------***
 		if (`rcmaster' == 0) { // If master DOES exist
 			* use "`outdir'\02.input/peb_master.dta", clear
-			qui peb master, load
+			qui peb master, load `pause'
 			cap rename filename source
+			
+			cap drop _merge
 			merge 1:1 `mergevar' indicator using "`outdir'\02.input/peb_`indic'.dta", /* 
 			*/       replace update nogen
 			
+			pause save - right after merge with MASTER file 
+			
 			if inlist("`indic'", "pov", "ine") {
-				peb_exception apply, outdir("`outdir'")				
+				peb_exception apply, outdir("`outdir'")	`pause'			
 			}
 			drop if inlist(values, ., 0)
 			peb_addregion

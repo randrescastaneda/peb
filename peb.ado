@@ -90,7 +90,7 @@ qui {
 	Update exceptions
 	==================================================*/
 	peb_exception load, outdir("`outdir'") ttldir("`ttldir'") /* 
-	*/ datetime(`datetime') indic("`indic'")
+	*/ datetime(`datetime') indic("`indic'") `pause'
 	
 	
 	/*==================================================
@@ -201,7 +201,7 @@ qui {
 		set trace off
 		
 		rename filename source 
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' `pause'
 		
 	} // end of pov and ine
 	
@@ -216,6 +216,10 @@ qui {
 			peb_shpupdate, outdir("`outdir'") ttldir("`ttldir'")
 		}
 		
+		***********************************************************
+		*NOTE: This SHP section is provided by Pepe Montes
+		***********************************************************
+		
 		pause shp - load GDSP circa 2010-2015
 		dirlist "`spdir'\GDSP circa 2010-2015.xlsx"
 		local ftimes = "`r(ftimes)'"
@@ -225,6 +229,7 @@ qui {
 		*/                 cellra("A6:N97") first sheet("GPSP 2010-2015") 
 		
 		destring _all, replace
+		missings dropobs, force 
 		
 		ren _all, lower
 		ren countryname country
@@ -382,8 +387,7 @@ qui {
 		
 		* Save data
 		pause shp - before saving 
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'
-		 */
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' `pause'
 		
 	}
 	
@@ -508,7 +512,7 @@ qui {
 		*/   date time  datetime case values
 		
 		pause npl - Right before saving
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' `pause'
 		
 		
 	} // End of National POverty lines and Macro indicators. 
@@ -644,7 +648,7 @@ qui {
 		*/ update replace  
 		
 		pause key - right before saving 
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'  `pause'
 		
 	}
 	
@@ -684,7 +688,7 @@ qui {
 		order `keepvars'
 		keep `keepvars'
 		
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'  `pause'
 	}
 	
 	*--------------------
@@ -751,7 +755,7 @@ qui {
 		
 		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
 		*/ update replace  
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")	 `force'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")	 `force'  `pause'
 		
 	} // end of international poverty line to Local currency unit
 }
