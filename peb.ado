@@ -193,7 +193,7 @@ qui {
 		
 		*----------Save file
 		if (regexm("`trace'", "E|Ex")) set trace on
-		peb_exception apply, outdir("`outdir'") // exceptions
+		peb_exception apply, outdir("`outdir'") `pause' // exceptions
 		set trace off
 		
 		rename filename source 
@@ -400,7 +400,7 @@ qui {
 		
 		* include Population provided by the TTL
 		merge m:1 countrycode using "`outdir'/02.input/peb_exceptions.dta", /*  
-		*/ nogen keep(master match) keepusing(ex_nu_poor_npl)
+		*/ nogen keep(master match) keepusing(ex_nu_poor_npl ex_spell_pov_ine)
 		
 		* Rename variables to be reshaped 
 		rename (population line gini) values=		
