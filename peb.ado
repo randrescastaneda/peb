@@ -166,7 +166,8 @@ qui {
 		
 		
 		duplicates tag countrycode year case, gen(tag)
-		replace case = case + "c" if (tag == 1 & welftype == "CONS")
+		replace case = case + "c" if ((tag == 1 & welftype == "CONS") | /* 
+		 */  (region == "ECA" & !regexm(filename, "EU\-")))
 		drop tag
 		pause `indic' - creating case + "c"
 		
