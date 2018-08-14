@@ -48,6 +48,9 @@ indicators. see {help indicators##vc_vars:indicators}{p_end}
 {synopt:{opt shpupdate}} update shared prosperity spell from Excel file provided by 
 Minh that has been completed by regional focal points. Only works within instruction 
 {it:shp}{p_end}
+{synopt:{opt force}} Force {cmd:peb} to save data even if its data signature is 
+the same as the previous one.{p_end}
+{syntab:Directories}
 {synopt:{opt indir(string)}} Alternative directory to indicators input{p_end}
 {synopt:{opt outdir(string)}} Alternative directory to PEB folder. Modify directly in 
 the ado-file when a new round of the PEB comes in time.{p_end}

@@ -19,9 +19,13 @@ ttldir(string)                   ///
 outdir(string)                   ///
 datetime(numlist)                ///
 indic(string)                    ///
+pause                            ///
 ]
 
 *---------- conditions
+if ("`pause'" == "pause") pause on
+else                      pause off
+
 
 * Action
 if !inlist("`action'", "load", "apply") {
@@ -110,7 +114,7 @@ qui {
 		merge m:1 countrycode using "`outdir'/02.input/peb_exceptions.dta", /*  
 		*/ nogen keep(master match)
 		
-		
+		pause exceptions - after merging with exceptions file 
 		* Exclude countries
 		drop if ex_country == "1"
 		
@@ -118,6 +122,8 @@ qui {
 		sort countrycode year
 		gen ex_n     = _n 
 		gen ex_2drop = 0
+		
+		pause exceptions - before excluding countries with years to exclude
 		levelsof countrycode if ex_spell_pov_ine != "", local(codes)
 		foreach code of local codes {
 			sum ex_n if countrycode == "`code'", meanonly
@@ -129,9 +135,20 @@ qui {
 			*/     !regexm(year, "`yearlist'"))
 		}
 		
+		pause exceptions - Before excluding years for rest of countries 2000/2018
 		
+		* Countries without explicit 
+		local maxyr: disp %tdCCYY date("`c(current_date)'", "DMY")
+		numlist "2000/`maxyr'"
+		local yearlist = "`r(numlist)'"
+		local yearlist: subinstr local yearlist " " "|", all
+		
+		replace ex_2drop = 1 if (ex_spell_pov_ine == "" &  /* 
+			*/     !regexm(year, "`yearlist'"))
+			
 		drop if ex_2drop == 1
 		
+		pause exceptions - after excluding years. 
 		* Exclude lines or gini
 		local cases "190 190c 320 550 gini"
 		foreach case of local cases {
