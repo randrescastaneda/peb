@@ -77,7 +77,7 @@ qui {
 		qui peb `indic', load
 		cap rename filename source
 		merge 1:1 `mergevar' using `indicfile', replace update nogen
-		drop if values == .
+		drop if inlist(values, ., 0)
 		
 		if inlist("`indic'", "pov", "ine") {
 			peb_exception apply, outdir("`outdir'")				
@@ -113,7 +113,7 @@ qui {
 			if inlist("`indic'", "pov", "ine") {
 				peb_exception apply, outdir("`outdir'")				
 			}
-			drop if values == .
+			drop if inlist(values, ., 0)
 			peb_addregion
 		} 
 		
