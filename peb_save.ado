@@ -12,7 +12,7 @@ program define peb_save, rclass
 
 syntax anything(name=indic id=indicator), [  ///
 outdir(string)                  ///
-datetime(numlist)               ///
+datetime(numlist)   force       ///
 ]
 
 * Indicator-specific conditions
@@ -82,7 +82,7 @@ qui {
 		if inlist("`indic'", "pov", "ine") {
 			peb_exception apply, outdir("`outdir'")				
 		}
-		
+		peb_addregion
 	}
 	
 	cap noi datasignature confirm using /* 
@@ -94,7 +94,7 @@ qui {
 	}
 	
 	
-	if (`rcindic' | `rcmaster') { // IF file does not exist or is different
+	if (`rcindic' | `rcmaster' | "`force'" != "") { // IF file does not exist or is different
 		
 		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'_`datetime'")
 		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'", replace)
@@ -114,6 +114,7 @@ qui {
 				peb_exception apply, outdir("`outdir'")				
 			}
 			drop if values == .
+			peb_addregion
 		} 
 		
 		cap noi datasignature confirm using /* 
