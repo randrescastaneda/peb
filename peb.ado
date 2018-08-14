@@ -139,7 +139,9 @@ qui {
 		keep if `vcvar' == 1
 		
 		*------- homogenize welfare type
-		replace welftype = "CONS" if !inlist(welftype, "INC", "")
+		replace welftype = "CONS" if (region == "ECA" & !regexm(filename, "EU\-")) // not EU-SILC in ECA
+		replace welftype = "INC"  if (regexm(filename, "EU\-"))  // EU-SILC
+		replace welftype = "CONS" if (welftype != "INC")        
 		replace welftype = "CONS" if regexm(welfarevar, "pcexp")
 		replace welftype = "INC"  if regexm(welfarevar, "pcinc")
 		
@@ -157,10 +159,13 @@ qui {
 		duplicates tag countrycode year case welftype, gen(tag)
 		keep if (tag ==  0| (tag >= 1 & type == "GPWG2")) // GPWG2 prevails over GMD
 		drop tag
+		pause `indic' - after keeping (tag >= 1 & type == "GPWG2")
+		
 		
 		duplicates tag countrycode year case, gen(tag)
 		replace case = case + "c" if (tag == 1 & welftype == "CONS")
 		drop tag
+		pause `indic' - creating case + "c"
 		
 		/* NOTE: we need to include here the default survey for each 
 		country in case there are more than one.  */
