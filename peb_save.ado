@@ -26,6 +26,8 @@ qui {
 	tempfile indicfile
 	save `indicfile', replace
 	
+	
+	
 	* --------------- Procedure for write up file
 	
 	if ("`indic'" == "wup") {
@@ -77,7 +79,9 @@ qui {
 	* ---------------  procedure for indicators files
 	
 	local mergevar "countrycode year case"
-	
+	local keepvars id region countrycode year source date time datetime /* 
+	 */ case values indicator comparable
+	 
 	cap confirm file "`outdir'\02.input/peb_master.dta"
 	local rcmaster = _rc
 	
@@ -117,12 +121,11 @@ qui {
 		noi disp in y "file /peb_`indic'.dta has been updated"
 		
 		*** ---- Update master file--------***
-		if (`rcmaster' == 0) { // If master DOES exist
+		if (`rcmaster' == 0 | "`force'" != "") { // If master DOES exist
 			* use "`outdir'\02.input/peb_master.dta", clear
 			qui peb master, load `pause'
 			cap rename filename source
 			
-			cap drop _merge
 			merge 1:1 `mergevar' indicator using "`outdir'\02.input/peb_`indic'.dta", /* 
 			*/       replace update nogen
 			
@@ -131,6 +134,10 @@ qui {
 			if inlist("`indic'", "pov", "ine") {
 				peb_exception apply, outdir("`outdir'")	`pause'			
 			}
+
+			keep `keepvars'
+			order `keepvars'
+			
 			drop if inlist(values, ., 0)
 			peb_addregion
 		} 
@@ -143,7 +150,7 @@ qui {
 			noi datasignature report
 		}
 		
-		if (`rcmastsign' | `rcmaster') {  // IF file is different of dile does not exist
+		if (`rcmastsign' | `rcmaster' | "`force'" != "") {  // IF file is different or does not exist
 			
 			* DTA file
 			sort indicator countrycode source year case
