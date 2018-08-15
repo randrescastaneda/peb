@@ -33,6 +33,8 @@ qui {
 		cap confirm new file "`outdir'\02.input/peb_`indic'.dta"
 		if (_rc) {
 			use "`outdir'\02.input/peb_`indic'.dta", clear
+			
+			tostring topublish toclearance, force replace 
 			merge 1:1 id using `indicfile', replace update nogen
 			drop if writeup == ""
 		}
@@ -44,6 +46,10 @@ qui {
 			noi disp in y "detailed report of changes in peb_`indic'.dta"
 			noi datasignature report
 		}
+		
+		peb_addregion
+		order id countrycode case upi date time datetime /* 
+		 */ toclearance topublish writeup region cleared 
 		
 		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'_`datetime'")
 		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'", replace)

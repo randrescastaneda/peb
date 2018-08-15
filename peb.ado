@@ -671,7 +671,7 @@ qui {
 		keep if datetime == `mdatetime' 
 		drop `mdatetime' 
 		
-		destring toclearance topublish, replace force
+		destring cleared, replace force
 		
 		rename (keyfindings  nationaldata) writeup=
 		reshape long writeup, i(countrycode) j(case) string
@@ -683,8 +683,11 @@ qui {
 		replace writeup = subinstr(writeup, `"”"', `"""', .)
 		replace writeup = subinstr(writeup, `"’"', `"'"', .)
 		
+		gen toclearance = ""
+		gen topublish   = ""
 		
-		local keepvars "id countrycode case upi date time datetime toclearance topublish writeup"
+		local keepvars id countrycode case upi date time datetime /* 
+		 */ cleared writeup toclearance topublish
 		order `keepvars'
 		keep `keepvars'
 		
