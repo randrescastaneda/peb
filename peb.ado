@@ -167,7 +167,7 @@ qui {
 		
 		duplicates tag countrycode year case, gen(tag)
 		replace case = case + "c" if ((tag == 1 & welftype == "CONS") | /* 
-		 */  (region == "ECA" & !regexm(filename, "EU\-")))
+		*/  (region == "ECA" & !regexm(filename, "EU\-")))
 		drop tag
 		pause `indic' - creating case + "c"
 		
@@ -216,174 +216,85 @@ qui {
 			peb_shpupdate, outdir("`outdir'") ttldir("`ttldir'")
 		}
 		
-		***********************************************************
-		*NOTE: This SHP section is provided by Pepe Montes
-		***********************************************************
-		
+		*------------- Describe input file
+		* local spdir \\wbgfscifs01\GTSD\02.core_team\02.data\02.SharedProsperity
+		local shpfilename "`spdir'/GDSP circa 2010-2015_forPEB_AM2018.xlsx"
 		pause shp - load GDSP circa 2010-2015
-		dirlist "`spdir'\GDSP circa 2010-2015.xlsx"
+		dirlist "`shpfilename'"
 		local ftimes = "`r(ftimes)'"
 		local fdates = "`r(fdates)'"
-	
-		import excel using "`spdir'/GDSP circa 2010-2015.xlsx", clear /* 
-		*/                 cellra("A6:N97") first sheet("GPSP 2010-2015") 
+		
+		import excel using "`shpfilename'", describe
+		local shtname1  = "`r(worksheet_1)'" 
+    local shtname2  = "`r(worksheet_2)'" 
+    
+		local shtrange1 = "`r(range_1)'" 
+    local shtrange2 = "`r(range_2)'" 
+		
+		local shtrange1: subinstr local shtrange1 "A1" "A6", all
+		local shtrange2: subinstr local shtrange2 "A1" "A6", all
+		
+		
+		*------------- Import Old sequence
+		import excel using "`shpfilename'", clear case(lower) /* 
+		*/            cellra("`shtrange2'") firstrow sheet("`shtname2'")
 		
 		destring _all, replace
 		missings dropobs, force 
 		
-		ren _all, lower
-		ren countryname country
+		sum sequence, meanonly
+		local mexseq = r(max)
+		tempfile oldseq
+		save `oldseq'
 		
-		keep	region code country period type growthb40 growthtotal
-		order	region code country period type growthb40 growthtotal
-		for var region code country period type growthb40 growthtotal \ any A B C D E F G : ren X Y
-		isid B
-		tempfile _11
-		save `_11'
+		*------------- Import NEW sequence
+		import excel using "`shpfilename'", clear case(lower) /* 
+		*/            cellra("`shtrange1'") firstrow sheet("`shtname1'")
 		
-		pause shp - load Draft SP SM2018@3.xlsx
-		import excel using "`spdir'/Draft SP SM2018@3.xlsx", clear cellra("A1:H128") first
-		replace SPSM2018="Yes" if code=="TUN" | code=="TZA"
-		keep if trim(SPSM2018)=="Yes"
-		gen country=""
-		keep	region code country period type growthb40 growthtotal
-		order	region code country period type growthb40 growthtotal
-		for var region code country period type growthb40 growthtotal \ any A B C D E F G : ren X Y
-		isid B
-		tempfile _10
-		save `_10'
+		destring _all, replace
+		missings dropobs, force 
 		
-		pause shp - load GDSP circa 2009-14 (Nov 28 2017).xlsx
-		import excel using "`spdir'/GDSP circa 2009-14 (Nov 28 2017).xlsx", clear cellra("A6:G100")
-		isid B
-		tempfile _9
-		save `_9'
-		pause shp - load GDSP circa 2008-13 (08_10_16_UPDATE v2).xlsx
-		import excel using "`spdir'/GDSP circa 2008-13 (08_10_16_UPDATE v2).xlsx", clear cellra("A6:G88")
-		for var F G : replace X=X*100
-		isid B
-		tempfile _8
-		save `_8'
+		gen sequence = `mexseq' + 1
+		gen round = "AM2018"
+		gen circayear = "2010-2015"
 		
-		pause shp - load GDSP circa 2007-12 (10_19_15_UPDATE) FY15.xls
-		import excel using "`spdir'/GDSP circa 2007-12 (10_19_15_UPDATE) FY15.xls", clear cellra("A6:G99")
-		replace A="EAP" if A=="East Asia & Pacific"
-		replace A="ECA" if A=="Europe & Central Asia"
-		replace A="LAC" if A=="Latin America & Caribbean"
-		replace A="MNA" if A=="Middle East & North Africa"
-		replace A="SAR" if A=="South Asia"
-		replace A="SSA" if A=="Sub-Saharan Africa"
+		append using `oldseq'
 		
-		for var F G : replace X=X*100
-		isid B
-		tempfile _7
-		save `_7'
+		* ---------- Arrange data
 		
-		pause shp - load GDSP circa 2006-2011_Final FY14.xlsx
-		import excel using "`spdir'/GDSP circa 2006-2011_Final FY14.xlsx", clear cellra("A7:G78") sh("GDSP_Pp")	//faltan 3 digits code
-		replace A="EAP" if A=="East Asia & Pacific"
-		replace A="ECA" if A=="Europe & Central Asia"
-		replace A="LAC" if A=="Latin America & Caribbean"
-		replace A="MNA" if A=="Middle East & North Africa"
-		replace A="SAR" if A=="South Asia"
-		replace A="SSA" if A=="Sub-Saharan Africa"
-		
-		pause shp - merge all ShP temporal files
-		merge 1:1 B using `_7' , update replace gen(_me67)
-		merge 1:1 B using `_8' , update replace gen(_me678)
-		merge 1:1 B using `_9' , update replace gen(_me6789)
-		merge 1:1 B using `_10', update replace gen(_me67890)
-		merge 1:1 B using `_11', update replace gen(_me678901)
-		ren A region_sp
-		ren B code
-		ren D period
-		ren F growthb40
-		ren G growthtotal
-		
-		*import exc using "${SP_final}", sheet(updatedb40) clear first
-		
-		pause shp - fix data
-		isid code
-		*gsort -gr_b40_3
-		gsort -growthb40
-		ren _all, lower
-		cap clonevar code=wbcode
-		isid code							// making sure there is only one spell per country
-		
-		gen year0 = substr(period,1,4)
-		gen year1 = substr(period,-4,4)
-		drop if year1 == year0 				// exclude countries without SP spell
-		drop if mi(growthb40)
-		
-		levelsof code, local(spnats)		// countries with sp data 
-		foreach c of local spnats {
-			qui levelsof year0 if code=="`c'", local(`c'_t0) clean
-			qui levelsof year1 if code=="`c'", local(`c'_t1) clean
-			di in yellow "`c':``c'_t0':``c'_t1'"
-		}
-		
-		* add top10 and top60 for the future 
-		cap gen double sp_premium=growthb40-growthtotal
-		cap clonevar region_sp=region
-		*for var growth* sp_premium : replace X=X*1
-		keep	region_sp code period sp_premium growthb40 growthtotal
-		order	region_sp code period sp_premium growthb40 growthtotal
-		
-		
-		***This part needs to be checked in the exceptions file START
-		count
-		loc g=r(N)+1
-		set obs `g'
-		replace region_sp="SSA" in `g' //
-		replace code="ZWE" in `g'
-		replace period="2011-2017" in `g'
-		***This part needs to be checked in the exceptions file END
-		
-		keep if !mi(code)
-		pause shp - gen date and time
-		
+		*date and time
 		gen double date = date("`fdates'", "MDY")
 		format date %td
 
 		gen double time = clock("`ftimes'", "hm")
 		format time %tcHH:MM:SS
 
-		// I do it this way to understand the relation
-		gen double datetime = date*24*60*60*1000 + time  
+		gen double datetime = date*24*60*60*1000 + time  // I do it this way to understand the relation
 		format datetime %tcDDmonCCYY_HH:MM:SS
+
+		rename code countrycode
 		
-		*tostring region_sp-growthtotal, replace force
+		*Max sequence
+		bysort countrycode (sequence): egen maxseq = max(sequence)
+		keep if sequence == maxseq
 		
-		**********************************************************************	
+		*ShP premium
+		cap gen double premium=growthb40-growthtotal
+		
 		** In PEB AM2018 "master" worksheet format	
-		rename (sp_premium growthb40 growthtotal) (pre b40 tot)
+		rename (premium growthb40 growthtotal) (pre b40 tot)
 		rename (pre b40 tot) values=
-		
-		reshape long values, i(region_sp code period date time) j(case) s 
-		*destring _all, replace
+
+		reshape long values, i(region countrycode period date time) j(case) string 
+		replace values = values/100
 		
 		gen indicator="shp"
-		ren code countrycode
 		gen id=countrycode+indicator+case
-		ren region_sp region
 		ren period year
 		gen source=""
 		gen comparable = . 
 		
-		format values %15.10f
-		replace values=values/100
-		
-		local v2keep id region countrycode year source date time /* 
-		 */   datetime case values indicator comparable
-		order `v2keep'
-		keep `v2keep'
 		compress
-		
-		
-		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
-		*/ update replace  
-		
-		* 
 		
 		* Save data
 		pause shp - before saving 
@@ -499,9 +410,9 @@ qui {
 		pause after droping duplicates 
 		
 		* Fix Gini to go from 0 to 1
-		 
+		
 		replace values = value*100 if /* 
-		 */  (mod(values, 10) > 0 & mod(values, 10) < 1 & case == "gini")
+		*/  (mod(values, 10) > 0 & mod(values, 10) < 1 & case == "gini")
 		
 		drop if values == .
 		
@@ -634,7 +545,7 @@ qui {
 		*/
 		
 		gen id = countrycode + indicator + precase + case 
-		 
+		
 		replace case = precase + case
 		
 		order id indicator countrycode year source /* 
@@ -687,7 +598,7 @@ qui {
 		gen topublish   = ""
 		
 		local keepvars id countrycode case upi date time datetime /* 
-		 */ cleared writeup toclearance topublish
+		*/ cleared writeup toclearance topublish
 		order `keepvars'
 		keep `keepvars'
 		
@@ -921,6 +832,172 @@ order id indicator region countrycode year filename /*
 */   date time  datetime case values
 
 *--------------------
+
+***********************************************************
+*NOTE: This SHP section is provided by Pepe Montes
+***********************************************************
+
+pause shp - load GDSP circa 2010-2015
+dirlist "`spdir'\GDSP circa 2010-2015.xlsx"
+local ftimes = "`r(ftimes)'"
+local fdates = "`r(fdates)'"
+
+import excel using "`spdir'/GDSP circa 2010-2015.xlsx", clear /* 
+*/                 cellra("A6:N97") first sheet("GPSP 2010-2015") 
+
+destring _all, replace
+missings dropobs, force 
+
+ren _all, lower
+ren countryname country
+
+keep	region code country period type growthb40 growthtotal
+order	region code country period type growthb40 growthtotal
+for var region code country period type growthb40 growthtotal \ any A B C D E F G : ren X Y
+isid B
+tempfile _11
+save `_11'
+
+pause shp - load Draft SP SM2018@3.xlsx
+import excel using "`spdir'/Draft SP SM2018@3.xlsx", clear cellra("A1:H128") first
+replace SPSM2018="Yes" if code=="TUN" | code=="TZA"
+keep if trim(SPSM2018)=="Yes"
+gen country=""
+keep	region code country period type growthb40 growthtotal
+order	region code country period type growthb40 growthtotal
+for var region code country period type growthb40 growthtotal \ any A B C D E F G : ren X Y
+isid B
+tempfile _10
+save `_10'
+
+pause shp - load GDSP circa 2009-14 (Nov 28 2017).xlsx
+import excel using "`spdir'/GDSP circa 2009-14 (Nov 28 2017).xlsx", clear cellra("A6:G100")
+isid B
+tempfile _9
+save `_9'
+pause shp - load GDSP circa 2008-13 (08_10_16_UPDATE v2).xlsx
+import excel using "`spdir'/GDSP circa 2008-13 (08_10_16_UPDATE v2).xlsx", clear cellra("A6:G88")
+for var F G : replace X=X*100
+isid B
+tempfile _8
+save `_8'
+
+pause shp - load GDSP circa 2007-12 (10_19_15_UPDATE) FY15.xls
+import excel using "`spdir'/GDSP circa 2007-12 (10_19_15_UPDATE) FY15.xls", clear cellra("A6:G99")
+replace A="EAP" if A=="East Asia & Pacific"
+replace A="ECA" if A=="Europe & Central Asia"
+replace A="LAC" if A=="Latin America & Caribbean"
+replace A="MNA" if A=="Middle East & North Africa"
+replace A="SAR" if A=="South Asia"
+replace A="SSA" if A=="Sub-Saharan Africa"
+
+for var F G : replace X=X*100
+isid B
+tempfile _7
+save `_7'
+
+pause shp - load GDSP circa 2006-2011_Final FY14.xlsx
+import excel using "`spdir'/GDSP circa 2006-2011_Final FY14.xlsx", clear cellra("A7:G78") sh("GDSP_Pp")	//faltan 3 digits code
+replace A="EAP" if A=="East Asia & Pacific"
+replace A="ECA" if A=="Europe & Central Asia"
+replace A="LAC" if A=="Latin America & Caribbean"
+replace A="MNA" if A=="Middle East & North Africa"
+replace A="SAR" if A=="South Asia"
+replace A="SSA" if A=="Sub-Saharan Africa"
+
+pause shp - merge all ShP temporal files
+merge 1:1 B using `_7' , update replace gen(_me67)
+merge 1:1 B using `_8' , update replace gen(_me678)
+merge 1:1 B using `_9' , update replace gen(_me6789)
+merge 1:1 B using `_10', update replace gen(_me67890)
+merge 1:1 B using `_11', update replace gen(_me678901)
+ren A region_sp
+ren B code
+ren D period
+ren F growthb40
+ren G growthtotal
+
+*import exc using "${SP_final}", sheet(updatedb40) clear first
+
+pause shp - fix data
+isid code
+*gsort -gr_b40_3
+gsort -growthb40
+ren _all, lower
+cap clonevar code=wbcode
+isid code							// making sure there is only one spell per country
+
+gen year0 = substr(period,1,4)
+gen year1 = substr(period,-4,4)
+drop if year1 == year0 				// exclude countries without SP spell
+drop if mi(growthb40)
+
+levelsof code, local(spnats)		// countries with sp data 
+foreach c of local spnats {
+	qui levelsof year0 if code=="`c'", local(`c'_t0) clean
+	qui levelsof year1 if code=="`c'", local(`c'_t1) clean
+	di in yellow "`c':``c'_t0':``c'_t1'"
+}
+
+* add top10 and top60 for the future 
+cap gen double sp_premium=growthb40-growthtotal
+cap clonevar region_sp=region
+*for var growth* sp_premium : replace X=X*1
+keep	region_sp code period sp_premium growthb40 growthtotal
+order	region_sp code period sp_premium growthb40 growthtotal
+
+
+***This part needs to be checked in the exceptions file START
+count
+loc g=r(N)+1
+set obs `g'
+replace region_sp="SSA" in `g' //
+replace code="ZWE" in `g'
+replace period="2011-2017" in `g'
+***This part needs to be checked in the exceptions file END
+
+keep if !mi(code)
+pause shp - gen date and time
+
+gen double date = date("`fdates'", "MDY")
+format date %td
+
+gen double time = clock("`ftimes'", "hm")
+format time %tcHH:MM:SS
+
+// I do it this way to understand the relation
+gen double datetime = date*24*60*60*1000 + time  
+format datetime %tcDDmonCCYY_HH:MM:SS
+
+*tostring region_sp-growthtotal, replace force
+
+**********************************************************************	
+** In PEB AM2018 "master" worksheet format	
+rename (sp_premium growthb40 growthtotal) (pre b40 tot)
+rename (pre b40 tot) values=
+
+reshape long values, i(region_sp code period date time) j(case) s 
+*destring _all, replace
+
+gen indicator="shp"
+ren code countrycode
+gen id=countrycode+indicator+case
+ren region_sp region
+ren period year
+gen source=""
+gen comparable = . 
+
+format values %15.10f
+replace values=values/100
+
+local v2keep id region countrycode year source date time /* 
+*/   datetime case values indicator comparable
+order `v2keep'
+keep `v2keep'
+compress
+
+
+
 
 *--------------------
 
