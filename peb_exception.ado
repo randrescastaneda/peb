@@ -64,7 +64,7 @@ qui {
 		}
 		
 		if ("`indic'" == "wup") {
-			local xlnames  "WriteUpUpdate"
+			local xlnames  "WriteUpUpdate countriesin"
 		}
 		
 		foreach xlname of local xlnames {

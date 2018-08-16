@@ -572,6 +572,10 @@ qui {
 	*--------------------
 	if ("`indic'" == "wup") {
 		* use "`outdir'/02.input/peb_writeupupdate.dta", clear
+		peb countriesin, load `pause'
+		tempfile countryfile
+		save `countryfile'
+		
 		peb writeupupdate, load `pause'
 		missings dropvars, force
 		_gendatetime_var date time
@@ -597,11 +601,22 @@ qui {
 		gen toclearance = ""
 		gen topublish   = ""
 		
+		merge m:1 countrycode using `countryfile', nogen
+		expand 2 if id == ""
+		bysort countrycode: egen seq = seq() if id == ""
+		
+		replace id = countrycode + "keyf" if seq == 1
+		replace id = countrycode + "nati" if seq == 2
+		
+		
+		pause wup - before keeping final variables
+		
 		local keepvars id countrycode case upi date time datetime /* 
 		*/ cleared writeup toclearance topublish
 		order `keepvars'
 		keep `keepvars'
 		
+		pause wup - before saving 
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'  `pause'
 	}
 	
