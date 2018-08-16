@@ -40,7 +40,8 @@ qui {
 			
 			tostring topublish toclearance, force replace 
 			merge 1:1 id using `indicfile', replace update nogen
-			* drop if writeup == ""
+			replace writeup = "no writeup available for " + countrycode /* 
+			 */ if writeup == ""
 		}
 		
 		cap noi datasignature confirm using /* 
