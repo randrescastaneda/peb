@@ -26,13 +26,19 @@ qui {
 	tempfile indicfile
 	save `indicfile', replace
 	
+	local auxdir "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB\AM2018\01.tool\_aux"
+	
+	*-----------------------------------------------
 	* --------------- Procedure for write up file
+	*-----------------------------------------------
 	
 	if ("`indic'" == "wup") {
 		
 		cap confirm new file "`outdir'\02.input/peb_`indic'.dta"
 		if (_rc) {
 			use "`outdir'\02.input/peb_`indic'.dta", clear
+			
+			tostring topublish toclearance, force replace 
 			merge 1:1 id using `indicfile', replace update nogen
 			drop if writeup == ""
 		}
@@ -45,6 +51,10 @@ qui {
 			noi datasignature report
 		}
 		
+		peb_addregion
+		order id countrycode case upi date time datetime /* 
+		*/ toclearance topublish writeup region cleared 
+		
 		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'_`datetime'")
 		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'", replace)
 		save "`outdir'\02.input/_vintage/peb_`indic'_`datetime'.dta" 
@@ -53,7 +63,14 @@ qui {
 		
 		cap drop __00*
 		cap export excel using "`outdir'\05.tools\peb_`indic'.xlsx" , /* 
-		 */  replace first(variable) sheet(peb_`indic')
+		*/  replace first(variable) sheet(peb_`indic')
+		
+		
+		* Update WUP in PEs directory
+		cap export excel using "`auxdir'\peb_`indic'.xlsx" , /* 
+		*/  replace first(variable) sheet(peb_`indic')
+		
+		shell attrib +s +h "`auxdir'\peb_`indic'.xlsx"
 		
 		if (_rc) {
 			noi disp in red "Error updating /peb_`indic'.xlsx." _n /* 
@@ -68,9 +85,15 @@ qui {
 		exit
 	}  // end of procedure for write up file
 	
+	*------------------------------------------------------------
 	* ---------------  procedure for indicators files
+	*-----------------------------------------------------------
 	
 	local mergevar "countrycode year case"
+	local keepvars id region countrycode year source date time datetime /* 
+	*/ case values indicator comparable
+	
+	
 	
 	cap confirm file "`outdir'\02.input/peb_master.dta"
 	local rcmaster = _rc
@@ -111,12 +134,12 @@ qui {
 		noi disp in y "file /peb_`indic'.dta has been updated"
 		
 		*** ---- Update master file--------***
-		if (`rcmaster' == 0) { // If master DOES exist
-			* use "`outdir'\02.input/peb_master.dta", clear
+		if (`rcmaster' == 0 | "`force'" != "") { // If master DOES exist
+			
 			qui peb master, load `pause'
 			cap rename filename source
 			
-			cap drop _merge
+			drop if indicator == "`indic'"
 			merge 1:1 `mergevar' indicator using "`outdir'\02.input/peb_`indic'.dta", /* 
 			*/       replace update nogen
 			
@@ -125,6 +148,10 @@ qui {
 			if inlist("`indic'", "pov", "ine") {
 				peb_exception apply, outdir("`outdir'")	`pause'			
 			}
+			
+			keep `keepvars'
+			order `keepvars'
+			
 			drop if inlist(values, ., 0)
 			peb_addregion
 		} 
@@ -137,7 +164,7 @@ qui {
 			noi datasignature report
 		}
 		
-		if (`rcmastsign' | `rcmaster') {  // IF file is different of dile does not exist
+		if (`rcmastsign' | `rcmaster' | "`force'" != "") {  // IF file is different or does not exist
 			
 			* DTA file
 			sort indicator countrycode source year case
@@ -151,9 +178,14 @@ qui {
 			
 			cap drop __00*
 			cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
-		 */  replace first(variable) sheet(peb_master)
-		
+			*/  replace first(variable) sheet(peb_master)
 			
+			* Update master in PEs directory
+			cap export excel using "`auxdir'\peb_master.xlsx" , /* 
+			*/  replace first(variable) sheet(peb_master)
+			
+			shell attrib +s +h "`auxdir'\peb_master.xlsx"
+				
 			if (_rc) {
 				noi disp in red "Error updating /peb_master.xlsx." _n /* 
 				*/   "Fix and then resubmit by clicking " _c /* 
