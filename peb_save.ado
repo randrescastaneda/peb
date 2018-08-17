@@ -61,11 +61,9 @@ qui {
 			replace topublish   = "0" if topublish   == "" 
 			
 			local keepvars id countrycode case upi date time datetime /* 
-			*/ cleared writeup toclearance topublish
+			*/ toclearance topublish writeup region cleared 
 			order `keepvars'
 			keep `keepvars'
-			
-			
 			
 			
 		}
@@ -73,42 +71,41 @@ qui {
 		cap noi datasignature confirm using /* 
 		*/ "`outdir'\02.input/_datasignature/peb_`indic'", strict
 		local rcindic  = _rc
-		if (`rcindic' != 0) {
+		if (`rcindic' != 0 | "`force'" != "") {
 			noi disp in y "detailed report of changes in peb_`indic'.dta"
 			noi datasignature report
+			
+			peb_addregion
+			order id countrycode case upi date time datetime /* 
+			*/ toclearance topublish writeup region cleared 
+			
+			datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'_`datetime'")
+			datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'", replace)
+			save "`outdir'\02.input/_vintage/peb_`indic'_`datetime'.dta" 
+			save "`outdir'\02.input/peb_`indic'.dta", replace
+			noi disp in y "file /peb_`indic'.dta has been updated"
+			
+			cap drop __00*
+			cap export excel using "`outdir'\05.tools\peb_`indic'.xlsx" , /* 
+			*/  replace first(variable) sheet(peb_`indic')
+			
+			
+			* Update WUP in PEs directory
+			cap export excel using "`auxdir'\peb_`indic'.xlsx" , /* 
+			*/  replace first(variable) sheet(peb_`indic')
+			
+			shell attrib +s +h "`auxdir'\peb_`indic'.xlsx"
+			
+			if (_rc) {
+				noi disp in red "Error updating /peb_`indic'.xlsx." _n /* 
+				*/   "Fix and then resubmit by clicking " _c /* 
+				*/   `"{stata export excel using "`outdir'\05.tools\peb_`indic'.xlsx" , replace first(variable) sheet(peb_`indic'):here}"' _n
+				error
+			}
+			else {
+				noi disp in y "file peb_`indic'.xlsx updated successfully"
+			}
 		}
-		
-		peb_addregion
-		order id countrycode case upi date time datetime /* 
-		*/ toclearance topublish writeup region cleared 
-		
-		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'_`datetime'")
-		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'", replace)
-		save "`outdir'\02.input/_vintage/peb_`indic'_`datetime'.dta" 
-		save "`outdir'\02.input/peb_`indic'.dta", replace
-		noi disp in y "file /peb_`indic'.dta has been updated"
-		
-		cap drop __00*
-		cap export excel using "`outdir'\05.tools\peb_`indic'.xlsx" , /* 
-		*/  replace first(variable) sheet(peb_`indic')
-		
-		
-		* Update WUP in PEs directory
-		cap export excel using "`auxdir'\peb_`indic'.xlsx" , /* 
-		*/  replace first(variable) sheet(peb_`indic')
-		
-		shell attrib +s +h "`auxdir'\peb_`indic'.xlsx"
-		
-		if (_rc) {
-			noi disp in red "Error updating /peb_`indic'.xlsx." _n /* 
-			*/   "Fix and then resubmit by clicking " _c /* 
-			*/   `"{stata export excel using "`outdir'\05.tools\peb_`indic'.xlsx" , replace first(variable) sheet(peb_`indic'):here}"' _n
-			error
-		}
-		else {
-			noi disp in y "file peb_`indic'.xlsx updated successfully"
-		}
-		
 		exit
 	}  // end of procedure for write up file
 	
