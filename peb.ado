@@ -143,6 +143,7 @@ qui {
 		
 		destring comparable, replace force
 		
+		pause `indic' - after merge with comparable
 		*----- Organize data 
 		destring year, force replace // convert to values
 		
@@ -165,6 +166,7 @@ qui {
 		sort countrycode year case type welftype
 		duplicates tag countrycode year case welftype type, gen(tag)
 		pause `indic' - after creating tag of replicates 
+		
 		keep if (tag ==  0| (tag >= 1 & module == "ALL"))  // All prevails over GPWG 
 		drop tag
 		
@@ -187,16 +189,17 @@ qui {
 		pause `indic' - after creating case + "c"
 		* Get rid of last year of other surveys different from EUSILC in ECA
 		
-		bysort countrycode: egen myear = max(year)
 		
-		drop if (region == "ECA" & !regexm(filename, "EU\-") /* 
-		 */ & year == myear & ntype == 2)
-	
 		* ----- Create id for INDEX formula
 		
 		if ("`indic'" == "ine") {
+			
 			keep if case == "gini"
+			replace values = value*100 if /* 
+			*/  (mod(values, 10) > 0 & mod(values, 10) < 1 & case == "gini")				
+			
 		}
+		drop if values == .
 		gen indicator = "`indic'"
 		
 		tostring year, replace force
