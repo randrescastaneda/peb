@@ -35,9 +35,18 @@ else                      pause off
 
 qui {
 	
-	cap which dirlist
-	if (_rc) ssc install dirlist
+	*------------------ SSC commands  ------------------
+	local sscados "dirlist unique"
+	foreach ado of local sscados {
+		cap which `ado'
+		if (_rc) ssc install `ado'
+		local adoupdate "`adoupdate' `ado'"
+	}
 	
+	if ("`adoupdate'" != "") 	{
+		adoupdate `adoupdate', ssconly 		
+		if ("`r(pkglist)'" != "") adoupdate `r(pkglist)', update
+	}
 	
 	/*==================================================
 	Consistency Check
@@ -203,6 +212,7 @@ qui {
 		*-------------------------------------------------------------
 		*------------------Include Group Data------------------------
 		*-------------------------------------------------------------
+		pause pov - before merging group data
 		
 		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
 		*/ update replace  
@@ -640,13 +650,6 @@ qui {
 	
 	*--------------------
 	if ("`indic'" == "plc") {  // Poverty line in Local Currency unite
-		* use "`outdir'\02.input/peb_pov.dta", clear
-		peb pov, load `pause'
-		destring year, replace
-		collapse (max) year, by(countrycode)
-		
-		tempfile myear
-		save `myear'
 		
 		qui datalibweb, country(Support) year(2005) surveyid(Support_2005_CPI_v02_M) /* 
 		*/	filename("Final CPI PPP to be used.dta") type(GMDRAW) 
@@ -668,8 +671,6 @@ qui {
 		
 		rename code countrycode
 		
-		merge 1:1 countrycode year using `myear', keep(match)
-		
 		local plines "1.9 3.2 5.5"
 		foreach ll of loc plines{
 			gen values`=100*`ll'' = `ll'*cpi2011*icp2011
@@ -677,10 +678,12 @@ qui {
 		
 		peb_addregion
 		
+		pause plc - before reshape
+		
 		keep region countrycode year date time datetime values*
+		reshape long values, i(countrycode year) j(case)
 		
-		reshape long values, i(countrycode) j(case)
-		
+		pause plc - after reshape
 		
 		tostring case year, replace force
 		replace case = "ipl" if case == "190" 
@@ -694,8 +697,12 @@ qui {
 		order id indicator region countrycode year source /* 
 		*/   date time  datetime case values
 		
+		keep id indicator region countrycode year source /* 
+		*/   date time  datetime case values
+		
 		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
 		*/ update replace  
+		
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")	 `force'  `pause'
 		
 	} // end of international poverty line to Local currency unit
