@@ -36,12 +36,38 @@ qui {
 		
 		cap confirm new file "`outdir'\02.input/peb_`indic'.dta"
 		if (_rc) {
+			peb countriesin, load `pause'
+			tempfile countryfile
+			save `countryfile'
+			
 			use "`outdir'\02.input/peb_`indic'.dta", clear
 			
 			tostring topublish toclearance, force replace 
 			merge 1:1 id using `indicfile', replace update nogen
 			replace writeup = "no write-up available for " + countrycode /* 
-			 */ if writeup == ""
+			*/ if writeup == ""
+			
+			merge m:1 countrycode using `countryfile', nogen
+			expand 2 if id == ""
+			bysort countrycode: egen seq = seq() if id == ""
+			
+			replace id = countrycode + "keyf" if seq == 1
+			replace id = countrycode + "nati" if seq == 2
+			
+			replace case = "keyfindings"  if case == "" & seq == 1
+			replace case = "nationaldata" if case == "" & seq == 2
+			
+			replace toclearance = "0" if toclearance == "" 
+			replace topublish   = "0" if topublish   == "" 
+			
+			local keepvars id countrycode case upi date time datetime /* 
+			*/ cleared writeup toclearance topublish
+			order `keepvars'
+			keep `keepvars'
+			
+			
+			
+			
 		}
 		
 		cap noi datasignature confirm using /* 
@@ -110,7 +136,8 @@ qui {
 		merge 1:1 `mergevar' using `indicfile', replace update  nogen
 		pause save - right after merge with indicators file
 		
-		drop if inlist(values, ., 0)
+		* drop if inlist(values, ., 0)
+		drop if values == .
 		if inlist("`indic'", "pov", "ine") {
 			peb_exception apply, outdir("`outdir'") `pause'	
 		}
@@ -153,7 +180,8 @@ qui {
 			keep `keepvars'
 			order `keepvars'
 			
-			drop if inlist(values, ., 0)
+			* drop if inlist(values, ., 0)
+			drop if values == .
 			peb_addregion
 		} 
 		
@@ -186,7 +214,7 @@ qui {
 			*/  replace first(variable) sheet(peb_master)
 			
 			shell attrib +s +h "`auxdir'\peb_master.xlsx"
-				
+			
 			if (_rc) {
 				noi disp in red "Error updating /peb_master.xlsx." _n /* 
 				*/   "Fix and then resubmit by clicking " _c /* 

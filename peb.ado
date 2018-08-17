@@ -594,9 +594,6 @@ qui {
 	*--------------------
 	if ("`indic'" == "wup") {
 		* use "`outdir'/02.input/peb_writeupupdate.dta", clear
-		peb countriesin, load `pause'
-		tempfile countryfile
-		save `countryfile'
 		
 		peb writeupupdate, load `pause'
 		missings dropvars, force
@@ -620,15 +617,8 @@ qui {
 		replace writeup = subinstr(writeup, `"”"', `"""', .)
 		replace writeup = subinstr(writeup, `"’"', `"'"', .)
 		
-		gen toclearance = ""
-		gen topublish   = ""
-		
-		merge m:1 countrycode using `countryfile', nogen
-		expand 2 if id == ""
-		bysort countrycode: egen seq = seq() if id == ""
-		
-		replace id = countrycode + "keyf" if seq == 1
-		replace id = countrycode + "nati" if seq == 2
+		gen toclearance = "0"
+		gen topublish   = "0"
 		
 		
 		pause wup - before keeping final variables
