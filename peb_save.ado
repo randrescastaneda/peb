@@ -40,7 +40,7 @@ qui {
 			
 			tostring topublish toclearance, force replace 
 			merge 1:1 id using `indicfile', replace update nogen
-			replace writeup = "no writeup available for " + countrycode /* 
+			replace writeup = "no write-up available for " + countrycode /* 
 			 */ if writeup == ""
 		}
 		

@@ -147,6 +147,8 @@ qui {
 		replace welftype = "CONS" if (welftype != "INC")        
 		replace welftype = "CONS" if regexm(welfarevar, "pcexp")
 		replace welftype = "INC"  if regexm(welfarevar, "pcinc")
+		replace welftype = "INC"  if region == "LAC" & !regexm(filename, "_PCN")
+		
 		
 		
 		*------- remove duplicates 
@@ -156,26 +158,36 @@ qui {
 		pause `indic' - after creating tag of replicates 
 		keep if (tag ==  0| (tag >= 1 & module == "ALL"))  // All prevails over GPWG 
 		drop tag
-		pause `indic' - after dropping replicates and tag
 		
 		* by survey. 
 		duplicates tag countrycode year case welftype, gen(tag)
-		keep if (tag ==  0| (tag >= 1 & type == "GPWG2")) // GPWG2 prevails over GMD
+		pause `indic' - after dropping replicates and create new tag
+		
+		// GPWG2 prevails over GMD
+		keep if (tag ==  0| (tag >= 1 & type == "GPWG2") | countrycode == "MEX") 
 		drop tag
 		pause `indic' - after keeping (tag >= 1 & type == "GPWG2")
 		
+		qui unique welftype, by(countrycode) gen(ntype)
+		sort countrycode ntype
+		replace ntype = ntype[_n-1] if ntype == .
 		
-		duplicates tag countrycode year case, gen(tag)
-		replace case = case + "c" if ((tag == 1 & welftype == "CONS") | /* 
-		*/  (region == "ECA" & !regexm(filename, "EU\-")))
-		drop tag
-		pause `indic' - creating case + "c"
+		replace case = case + "c" if (ntype == 2 & welftype == "CONS")
 		
-		/* NOTE: we need to include here the default survey for each 
-		country in case there are more than one.  */
 		
+		pause `indic' - after creating case + "c"
+		* Get rid of last year of other surveys different from EUSILC in ECA
+		
+		bysort countrycode: egen myear = max(year)
+		
+		drop if (region == "ECA" & !regexm(filename, "EU\-") /* 
+		 */ & year == myear & ntype == 2)
+	
 		* ----- Create id for INDEX formula
 		
+		if ("`indic'" == "ine") {
+			keep if case == "gini"
+		}
 		gen indicator = "`indic'"
 		
 		tostring year, replace force
