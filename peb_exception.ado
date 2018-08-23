@@ -144,17 +144,22 @@ qui {
 		local yearlist: subinstr local yearlist " " "|", all
 		
 		replace ex_2drop = 1 if (ex_spell_pov_ine == "" &  /* 
-			*/     !regexm(year, "`yearlist'"))
-			
+		*/     !regexm(year, "`yearlist'"))
+		
 		drop if ex_2drop == 1
 		
 		pause exceptions - after excluding years. 
-		* Exclude lines or gini
-		local cases "190 190c 320 550 gini"
-		foreach case of local cases {
-			if (regexm("`case'", "[0-9]")) local casevar "fgt0_`case'"
-			else                           local casevar "`case'"
-			drop if case == "`case'" & ex_`casevar' == "1"
+		
+		if inlist("`indic'", "", "pov", "ine") {
+				
+			* Exclude lines or gini
+			local cases "190 190c 320 550 gini"
+			foreach case of local cases {
+				if (regexm("`case'", "[0-9]")) local casevar "fgt0_`case'"
+				else                           local casevar "`case'"
+				drop if case == "`case'" & ex_`casevar' == "1"
+			}
+			
 		}
 		
 		* drop ex_ vars
@@ -182,3 +187,4 @@ Notes:
 Version Control:
 
 
+		

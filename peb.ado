@@ -519,6 +519,9 @@ qui {
 		* T-1 for Eusilc data
 		replace year = strofreal(real(year) -1) if (regexm(filename, "EU\-"))
 		
+		pause key - before applying exceptions
+		peb_exception apply, outdir("`outdir'") `pause'	indic(`indic')
+		pause key - after applying exceptions
 		
 		destring year, force replace // convert to values
 		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
@@ -527,6 +530,9 @@ qui {
 		keep if welfarevar == "welfare"
 		
 		* Max year per country
+		
+		
+		pause key - before keeping max year per country
 		tempvar myear
 		bysort countrycode: egen double `myear' = max(year)
 		keep if year == `myear' 
