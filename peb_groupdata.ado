@@ -27,9 +27,9 @@ pause                          ///
 
 if ("`pause'" != "") pause on 
 else                 pause off
-local indir "\\wbntst01.worldbank.org\TeamDisk\GPWG\datalib\_global_pov_CPB_Spring2018\template\sent"
+local indir "\\wbgfscifs01\gtsd\03.projects_corp\01.PEB\01.PEB_AM18\01.PEB_AM18_QA\_aux"
 
-local infile "PEB_template@\`tver'.xlsm"
+local infile "PEB_templateGroupData.xlsm"
 
 
 /*==================================================
@@ -37,7 +37,7 @@ Load data from template
 ==================================================*/
 
 *---------- Select version and load
-
+/* 
 if ("`tver'" == "" ) {
 	local allvers: dir "`indir'" files "PEB_template@*.xlsm"
 	mata {
@@ -46,11 +46,11 @@ if ("`tver'" == "" ) {
 		st_local("tver", strofreal(max(strtoreal(Vs))))
 	}
 }
-
-/* 
-local sheets welfaretype_all
 */
-local countries "CHN CPV ZWE MKD"
+ 
+local sheets welfaretype_all
+
+local countries "CHN CPV ZWE MKD IND"
 local countries_: subinstr local countries " " "|", all
 
 
