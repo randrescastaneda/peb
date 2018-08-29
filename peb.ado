@@ -439,6 +439,10 @@ qui {
 		replace values = value*100 if /* 
 		*/  (mod(values, 10) > 0 & mod(values, 10) < 1 & case == "gini")
 		
+		replace values = value/100 if /* 
+		*/  (mod(values, 1000) < values & case == "gini")
+		
+		
 		drop if values == .
 		
 		order id indicator countrycode year source /* 
