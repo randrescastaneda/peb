@@ -668,9 +668,7 @@ qui {
 		gen time = "00:00:00"
 		_gendatetime_var date time
 		
-		/* NOTE: we still need to add a condition for those countries
-		with several data levels. */
-		keep if datalevel == 2
+		recode datalevel (0 1 = 1) (2 = 2), gen(dlevel)
 		
 		rename code countrycode
 		
@@ -683,8 +681,13 @@ qui {
 		
 		pause plc - before reshape
 		
-		keep region countrycode year date time datetime values*
-		reshape long values, i(countrycode year) j(case)
+		keep region countrycode year date time datetime datalevel values*
+		reshape long values, i(countrycode year datalevel) j(case)
+		
+		* when urban and rural ppp values exist, we get the mean. 
+		recode datalevel (0 1 = 1) (2 = 2), gen(dlevel)
+		
+		collapse (mean) values, by(region countrycode year datetime date time dlevel case)
 		
 		pause plc - after reshape
 		
