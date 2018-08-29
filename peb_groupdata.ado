@@ -290,6 +290,12 @@ if ("`indic'" == "key") {
 	rename b40 t60 , upper
 	rename (B40 T60) poor=zz
 	
+	tempvar myear
+	destring year, replace force
+	bysort countrycode: egen double `myear' = max(year)
+	keep if year == `myear' 
+	tostring year, replace force
+	
 	reshape long poor, i(countrycode year _varname) j(case) string
 	rename (poor _varname) (values precase)
 	
