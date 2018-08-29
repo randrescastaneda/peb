@@ -130,6 +130,9 @@ qui {
 		cap rename filename source
 		
 		cap drop _merge
+		if inlist("`indic'", "shp", "key") { // this has to be changed in next round.
+			drop in 1/l
+		}
 		merge 1:1 `mergevar' using `indicfile', replace update  nogen
 		pause save - right after merge with indicators file
 		
@@ -164,7 +167,7 @@ qui {
 			qui peb master, load `pause'
 			cap rename filename source
 			
-			drop if indicator == "`indic'"
+			drop if indicator == "`indic'" // for next round this has to change. 
 			merge 1:1 `mergevar' indicator using "`outdir'\02.input/peb_`indic'.dta", /* 
 			*/       replace update nogen
 			
