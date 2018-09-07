@@ -620,8 +620,26 @@ qui {
 	if ("`indic'" == "wup") {
 		* use "`outdir'/02.input/peb_writeupupdate.dta", clear
 		
+		
+		peb writeupupdate_edited, load
+		replace case = "keyfindings"  if case == "Progress on Poverty and Equality" 
+		replace case = "nationaldata" if case == "Poverty Data and Methodology"     
+		drop countryname 
+		
+		reshape wide writeup, i(region countrycode) j(case) string 
+		rename writeup* *
+		gen upi = "Patricia Morton (Editor)"
+		gen date = "9/4/2018" // datetime of delivery by email
+		gen time = "08:40:00" // datetime of delivery by email
+		gen cleared = "1"
+		tempfile wup_edited
+		save `wup_edited'
+		
+		
 		peb writeupupdate, load `pause'
 		missings dropvars, force
+		append using `wup_edited'
+		
 		_gendatetime_var date time
 		
 		* max date per country
