@@ -238,7 +238,7 @@ qui {
 	if ("`indic'" == "shp") {
 		
 		if ("`shpupdate'" == "shpupdate") {
-			peb_shpupdate, outdir("`outdir'") ttldir("`ttldir'")
+			peb_shpupdate, outdir("`outdir'") ttldir("`ttldir'") `pause'
 		}
 		
 		*------------- Describe input file
@@ -403,7 +403,7 @@ qui {
 		keep if `vcvar' == 1
 		drop region
 		rename regioncode region 
-		drop  vc_13jun2018 iso2code 
+		drop  iso2code 
 		
 		gen indicator = "npl"
 		gen source = "WDI"
