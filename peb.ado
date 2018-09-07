@@ -238,7 +238,7 @@ qui {
 	if ("`indic'" == "shp") {
 		
 		if ("`shpupdate'" == "shpupdate") {
-			peb_shpupdate, outdir("`outdir'") ttldir("`ttldir'")
+			peb_shpupdate, outdir("`outdir'") ttldir("`ttldir'") `pause'
 		}
 		
 		*------------- Describe input file
@@ -290,13 +290,13 @@ qui {
 		*date and time
 		gen double date = date("`fdates'", "MDY")
 		format date %td
-
+		
 		gen double time = clock("`ftimes'", "hm")
 		format time %tcHH:MM:SS
-
+		
 		gen double datetime = date*24*60*60*1000 + time  // I do it this way to understand the relation
 		format datetime %tcDDmonCCYY_HH:MM:SS
-
+		
 		rename code countrycode
 		
 		*Max sequence
@@ -309,7 +309,7 @@ qui {
 		** In PEB AM2018 "master" worksheet format	
 		rename (premium growthb40 growthtotal) (pre b40 tot)
 		rename (pre b40 tot) values=
-
+		
 		reshape long values, i(region countrycode period date time) j(case) string 
 		replace values = values/100
 		
@@ -363,10 +363,10 @@ qui {
 		
 		pause npl- before keepting max date
 		
-		bysort countrycode year case: egen double maxdate = max(datetime)
+		bysort countrycode year /*  case */ : egen double maxdate = max(datetime)
 		replace maxdate = cond(maxdate == datetime, 1, 0)
 		
-		drop if inlist(values, 0, .)  // if TTL didn't provide info
+		* drop if inlist(values, 0, .)  // if TTL didn't provide info
 		keep if maxdate == 1
 		
 		pause npl- after keeping max date
@@ -377,6 +377,7 @@ qui {
 		*/   date time  datetime case values
 		
 		gen ttl = 1
+		drop if date == .
 		tempfile ttlfile
 		save `ttlfile'
 		
@@ -385,11 +386,12 @@ qui {
 		*-------------------- Data from WDI
 		* use "`indir'\indicators_wdi_long.dta", clear
 		indicators wdi, load shape(long) `pause'
-		keep if inlist(case, "si_pov_nahc","sp_pop_totl","ny_gdp_pcap_pp_kd","ny_gnp_pcap_kd")
+		* keep if inlist(case, "si_pov_nahc","sp_pop_totl", "ny_gdp_pcap_pp_kd","ny_gnp_pcap_kd")
+		keep if inlist(case, "sp_pop_totl","ny_gdp_pcap_pp_kd","ny_gnp_pcap_kd")
 		
 		replace countrycode="KSV" if countrycode=="XKX"
 		
-		replace case = "line"  if case == "si_pov_nahc" 
+		* replace case = "line"  if case == "si_pov_nahc" 
 		replace case = "popu"  if case == "sp_pop_totl" 
 		replace case = "gdppc" if case == "ny_gdp_pcap_pp_kd" 
 		replace case = "gnppc" if case == "ny_gnp_pcap_kd" 
@@ -401,7 +403,7 @@ qui {
 		keep if `vcvar' == 1
 		drop region
 		rename regioncode region 
-		drop  vc_13jun2018 iso2code 
+		drop  iso2code 
 		
 		gen indicator = "npl"
 		gen source = "WDI"
@@ -429,10 +431,20 @@ qui {
 		pause before droping duplicates 
 		
 		duplicates tag id, gen(tag)
-		keep if (tag == 0 | (tag >0 & ttl == 1 ))
+		keep if (tag == 0    | /* 
+		*/      (tag >0 & ttl == 1 & inlist(case, "line", "gini")) |  /* 
+		*/      (tag >0 & case == "popu" & values != .)) 
 		drop tag 
 		
-		pause after droping duplicates 
+		duplicates tag id, gen(tag)
+		keep if (tag == 0 | tag >0 & ttl == 1)
+		drop tag 
+		
+		/* duplicates tag id, gen(tag)
+		keep if (tag == 0  | (tag >0 & ttl == 1 & case == "popu" & values == .) )
+	 */	
+	
+	pause after droping duplicates 
 		
 		* Fix Gini to go from 0 to 1
 		
@@ -608,8 +620,26 @@ qui {
 	if ("`indic'" == "wup") {
 		* use "`outdir'/02.input/peb_writeupupdate.dta", clear
 		
+		
+		peb writeupupdate_edited, load
+		replace case = "keyfindings"  if case == "Progress on Poverty and Equality" 
+		replace case = "nationaldata" if case == "Poverty Data and Methodology"     
+		drop countryname 
+		
+		reshape wide writeup, i(region countrycode) j(case) string 
+		rename writeup* *
+		gen upi = "Patricia Morton (Editor)"
+		gen date = "9/4/2018" // datetime of delivery by email
+		gen time = "08:40:00" // datetime of delivery by email
+		gen cleared = "1"
+		tempfile wup_edited
+		save `wup_edited'
+		
+		
 		peb writeupupdate, load `pause'
 		missings dropvars, force
+		append using `wup_edited'
+		
 		_gendatetime_var date time
 		
 		* max date per country
@@ -655,7 +685,7 @@ qui {
 	if ("`indic'" == "plc") {  // Poverty line in Local Currency unite
 		
 		qui datalibweb, country(Support) year(2005) type(GMDRAW) fileserver /* 
-	 */	surveyid(Support_2005_CPI_v02_M) filename(Final_CPI_PPP_to_be_used.dta) 
+		*/	surveyid(Support_2005_CPI_v02_M) filename(Final_CPI_PPP_to_be_used.dta) 
 		
 		local date: char _dta[note1]
 		local date: subinstr local date "updated in" "", all

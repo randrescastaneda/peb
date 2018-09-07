@@ -17,12 +17,15 @@ program define peb_shpupdate, rclass
 version 13
 
 syntax , [ ///
-outdir(string)                 ///
-ttldir(string)                 ///
+outdir(string)     ///
+ttldir(string)     ///
+pause              ///
 ]
 
 
-pause on 
+if ("`pause'" == "pause") pause on
+else                      pause off
+
 *-------------------------New File
 local dir    "`outdir'/_aux"
 local tllbku: subinstr local ttldir "\01.PovEcon_input" "", all
