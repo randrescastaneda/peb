@@ -64,7 +64,7 @@ qui {
 		}
 		
 		if ("`indic'" == "wup") {
-			local xlnames  "WriteUpUpdate countriesin"
+			local xlnames  "WriteUpUpdate countriesin WriteUpUpdate_edited"
 		}
 		
 		foreach xlname of local xlnames {
@@ -73,6 +73,7 @@ qui {
 			
 			import excel using "`ttldir'/`xlname'.xlsx", sheet("`xlname'") /* 
 			*/   firstrow case(lower) clear allstring
+			
 			
 			missings dropobs, force
 			desc, varlist

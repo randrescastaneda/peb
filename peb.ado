@@ -290,13 +290,13 @@ qui {
 		*date and time
 		gen double date = date("`fdates'", "MDY")
 		format date %td
-
+		
 		gen double time = clock("`ftimes'", "hm")
 		format time %tcHH:MM:SS
-
+		
 		gen double datetime = date*24*60*60*1000 + time  // I do it this way to understand the relation
 		format datetime %tcDDmonCCYY_HH:MM:SS
-
+		
 		rename code countrycode
 		
 		*Max sequence
@@ -309,7 +309,7 @@ qui {
 		** In PEB AM2018 "master" worksheet format	
 		rename (premium growthb40 growthtotal) (pre b40 tot)
 		rename (pre b40 tot) values=
-
+		
 		reshape long values, i(region countrycode period date time) j(case) string 
 		replace values = values/100
 		
@@ -685,7 +685,7 @@ qui {
 	if ("`indic'" == "plc") {  // Poverty line in Local Currency unite
 		
 		qui datalibweb, country(Support) year(2005) type(GMDRAW) fileserver /* 
-	 */	surveyid(Support_2005_CPI_v02_M) filename(Final_CPI_PPP_to_be_used.dta) 
+		*/	surveyid(Support_2005_CPI_v02_M) filename(Final_CPI_PPP_to_be_used.dta) 
 		
 		local date: char _dta[note1]
 		local date: subinstr local date "updated in" "", all
