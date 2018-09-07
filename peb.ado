@@ -363,10 +363,10 @@ qui {
 		
 		pause npl- before keepting max date
 		
-		bysort countrycode year case: egen double maxdate = max(datetime)
+		bysort countrycode year /*  case */ : egen double maxdate = max(datetime)
 		replace maxdate = cond(maxdate == datetime, 1, 0)
 		
-		drop if inlist(values, 0, .)  // if TTL didn't provide info
+		* drop if inlist(values, 0, .)  // if TTL didn't provide info
 		keep if maxdate == 1
 		
 		pause npl- after keeping max date
@@ -377,6 +377,7 @@ qui {
 		*/   date time  datetime case values
 		
 		gen ttl = 1
+		drop if date == .
 		tempfile ttlfile
 		save `ttlfile'
 		
@@ -385,11 +386,12 @@ qui {
 		*-------------------- Data from WDI
 		* use "`indir'\indicators_wdi_long.dta", clear
 		indicators wdi, load shape(long) `pause'
-		keep if inlist(case, "si_pov_nahc","sp_pop_totl","ny_gdp_pcap_pp_kd","ny_gnp_pcap_kd")
+		* keep if inlist(case, "si_pov_nahc","sp_pop_totl", "ny_gdp_pcap_pp_kd","ny_gnp_pcap_kd")
+		keep if inlist(case, "sp_pop_totl","ny_gdp_pcap_pp_kd","ny_gnp_pcap_kd")
 		
 		replace countrycode="KSV" if countrycode=="XKX"
 		
-		replace case = "line"  if case == "si_pov_nahc" 
+		* replace case = "line"  if case == "si_pov_nahc" 
 		replace case = "popu"  if case == "sp_pop_totl" 
 		replace case = "gdppc" if case == "ny_gdp_pcap_pp_kd" 
 		replace case = "gnppc" if case == "ny_gnp_pcap_kd" 
@@ -429,10 +431,20 @@ qui {
 		pause before droping duplicates 
 		
 		duplicates tag id, gen(tag)
-		keep if (tag == 0 | (tag >0 & ttl == 1 ))
+		keep if (tag == 0    | /* 
+		*/      (tag >0 & ttl == 1 & inlist(case, "line", "gini")) |  /* 
+		*/      (tag >0 & case == "popu" & values != .)) 
 		drop tag 
 		
-		pause after droping duplicates 
+		duplicates tag id, gen(tag)
+		keep if (tag == 0 | tag >0 & ttl == 1)
+		drop tag 
+		
+		/* duplicates tag id, gen(tag)
+		keep if (tag == 0  | (tag >0 & ttl == 1 & case == "popu" & values == .) )
+	 */	
+	
+	pause after droping duplicates 
 		
 		* Fix Gini to go from 0 to 1
 		
