@@ -92,6 +92,8 @@ qui {
 				
 				datasignature set, reset saving("`outdir'/02.input/_datasignature/peb_`sufname'_`datetime'") 
 				datasignature set, reset saving("`outdir'/02.input/_datasignature/peb_`sufname'", replace) 
+				
+				save "`outdir'/02.input/_vintage/peb_`sufname'_`datetime'.dta", replace
 				save "`outdir'/02.input/peb_`sufname'.dta", replace
 			}
 			else {
