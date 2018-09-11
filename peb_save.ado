@@ -65,6 +65,7 @@ qui {
 			order `keepvars'
 			keep `keepvars'
 			
+			peb_addregion
 			
 		}
 		
@@ -75,20 +76,14 @@ qui {
 			noi disp in y "detailed report of changes in peb_`indic'.dta"
 			noi datasignature report
 			
-			peb_addregion
-			order id countrycode case upi date time datetime /* 
-			*/ toclearance topublish writeup region cleared 
-			
 			datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'_`datetime'")
 			datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'", replace)
 			save "`outdir'\02.input/_vintage/peb_`indic'_`datetime'.dta" 
 			save "`outdir'\02.input/peb_`indic'.dta", replace
 			noi disp in y "file /peb_`indic'.dta has been updated"
 			
-			cap drop __00*
 			cap export excel using "`outdir'\05.tools\peb_`indic'.xlsx" , /* 
 			*/  replace first(variable) sheet(peb_`indic')
-			
 			
 			* Update WUP in PEs directory
 			cap export excel using "`auxdir'\peb_`indic'.xlsx" , /* 

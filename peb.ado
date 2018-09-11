@@ -336,6 +336,13 @@ qui {
 		
 		*-------------------- Data from TTL
 		* use "`outdir'/02.input/peb_nplupdate.dta", clear
+		peb comparable, load `pause'
+		duplicates tag countrycode year , gen(tag)
+		keep if (tag == 0 | (tag > 1 & welfarevar == "welfare"))
+		drop tag
+		tempfile comparafile
+		save `comparafile'
+		
 		
 		peb nplupdate, load `pause'
 		* fix dates
@@ -347,11 +354,23 @@ qui {
 		merge m:1 countrycode using "`outdir'/02.input/peb_exceptions.dta", /*  
 		*/ nogen keep(master match) keepusing(ex_nu_poor_npl ex_spell_pov_ine)
 		
+		* Add comparable year
+		merge m:1 countrycode year  using `comparafile', /*  
+		*/  keep(match) keepusing(comparable) nogen
+		
+		destring comparable, replace force
+		
+		pause npl - after merging with comparable
+		
 		* Rename variables to be reshaped 
 		rename (population line gini) values=		
 		rename ex_* values*
 		
-		reshape long values, i(countrycode year datetime) j(case) string
+		duplicates tag countrycode year comparable datetime, gen(tag)
+		keep if (tag == 0  | (tag > 0 & valuespopulation != ""))
+		drop tag
+		
+		reshape long values, i(countrycode year comparable datetime) j(case) string
 		
 		replace case = "popu" if case == "population"
 		replace case = "pttl" if case == "nu_poor_npl"
@@ -359,7 +378,7 @@ qui {
 		
 		pause `indic' - before droping variables
 		
-		keep countrycode year datetime date time case values source
+		keep countrycode year datetime date time case values source comparable
 		gen indicator = "npl"
 		
 		pause npl- before keepting max date
@@ -443,9 +462,9 @@ qui {
 		
 		/* duplicates tag id, gen(tag)
 		keep if (tag == 0  | (tag >0 & ttl == 1 & case == "popu" & values == .) )
-	 */	
-	
-	pause after droping duplicates 
+		*/	
+		
+		pause after droping duplicates 
 		
 		* Fix Gini to go from 0 to 1
 		
@@ -458,11 +477,11 @@ qui {
 		
 		drop if values == .
 		
-		order id indicator countrycode year source /* 
-		*/   date time  datetime case values
+		keep id indicator region countrycode year source case /* 
+		*/  date time datetime values comparable
 		
-		keep id indicator countrycode year source /* 
-		*/   date time  datetime case values
+		order id indicator region countrycode year source /* 
+		*/   date time  datetime case values comparable
 		
 		pause npl - Right before saving
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' `pause'
