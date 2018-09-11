@@ -135,7 +135,8 @@ qui {
 		}
 		
 		* T-1 for Eusilc data
-		replace year = strofreal(real(year) -1) if (regexm(filename, "EU\-"))
+		replace year = strofreal(real(year) -1) if /* 
+		*/ (regexm(filename, "EU\-") | (countrycode == "MYS")) // add Malaysia
 		
 		* Comparable years
 		merge m:1 countrycode year welfarevar using `comparafile', /*  
