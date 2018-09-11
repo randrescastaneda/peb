@@ -474,7 +474,6 @@ qui {
 	4: Key Indicators
 	==================================================*/
 	
-	*--------------------
 	if ("`indic'" == "key") {
 		* use "`outdir'/02.input/peb_keyupdate.dta", clear
 		tempfile shpfile
@@ -611,20 +610,20 @@ qui {
 		
 	}
 	
-	*--------------------
 	
 	/*==================================================
 	5. Write ups
 	==================================================*/
 	
-	*--------------------
 	if ("`indic'" == "wup") {
+		
 		* use "`outdir'/02.input/peb_writeupupdate.dta", clear
 		
 		
 		peb writeupupdate_edited, load
 		replace case = "keyfindings"  if case == "Progress on Poverty and Equality" 
 		replace case = "nationaldata" if case == "Poverty Data and Methodology"     
+		
 		drop countryname 
 		
 		reshape wide writeup, i(region countrycode) j(case) string 
@@ -651,15 +650,38 @@ qui {
 		
 		destring cleared, replace force
 		
+		noi tabdisp countrycode , c(datetime upi) by(region) concise
+		
 		rename (keyfindings  nationaldata) writeup=
 		reshape long writeup, i(countrycode) j(case) string
 		
 		gen id = countrycode + substr(case, 1, 4)
 		
 		
+		
+		* fix English Contractions
+		
 		replace writeup = subinstr(writeup, `"“"', `"""', .)
 		replace writeup = subinstr(writeup, `"”"', `"""', .)
 		replace writeup = subinstr(writeup, `"’"', `"'"', .)
+		
+		
+		replace writeup = subinstr(writeup, `"aren't"'    , `"are not"', .)
+		replace writeup = subinstr(writeup, `"can't"'     , `"cannot"', .)
+		replace writeup = subinstr(writeup, `"couldn't"'  , `"could not"', .)
+		replace writeup = subinstr(writeup, `"didn't"'    , `"did not"', .)
+		replace writeup = subinstr(writeup, `"don't"'     , `"do not"', .)
+		replace writeup = subinstr(writeup, `"doesn't"'   , `"does not"', .)
+		replace writeup = subinstr(writeup, `"hasn't"'    , `"has not"', .)
+		replace writeup = subinstr(writeup, `"haven't"'   , `"have not"', .)
+		replace writeup = subinstr(writeup, `"isn't"'     , `"is not"', .)
+		replace writeup = subinstr(writeup, `"mustn't"'   , `"must not"', .)
+		replace writeup = subinstr(writeup, `"shouldn't"' , `"should not"', .)
+		replace writeup = subinstr(writeup, `"wasn't"'    , `"was not"', .)
+		replace writeup = subinstr(writeup, `"weren't"'   , `"were not"', .)
+		replace writeup = subinstr(writeup, `"won't"'     , `"will not"', .)
+		replace writeup = subinstr(writeup, `"wouldn't"'  , `"would not"', .)
+		
 		
 		gen toclearance = "0"
 		gen topublish   = "0"
@@ -676,7 +698,6 @@ qui {
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'  `pause'
 	}
 	
-	*--------------------
 	
 	/*==================================================
 	6. International line in LCU
