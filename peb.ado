@@ -692,6 +692,7 @@ qui {
 		replace writeup = subinstr(writeup, `"don't"'     , `"do not"', .)
 		replace writeup = subinstr(writeup, `"doesn't"'   , `"does not"', .)
 		replace writeup = subinstr(writeup, `"hasn't"'    , `"has not"', .)
+		replace writeup = subinstr(writeup, `"hadn't"'    , `"had not"', .)
 		replace writeup = subinstr(writeup, `"haven't"'   , `"have not"', .)
 		replace writeup = subinstr(writeup, `"isn't"'     , `"is not"', .)
 		replace writeup = subinstr(writeup, `"mustn't"'   , `"must not"', .)
