@@ -23,7 +23,8 @@ ttldir(string)                 ///
 VCdate(string)                 ///
 trace(string)                  ///
 load  shpupdate   force        ///
-GROUPdata   pause              ///
+GROUPdata   pause  purge       ///
+COUNTry(passthru)              ///
 ]
 
 
@@ -75,7 +76,7 @@ qui {
 	loca datetime = `date'*24*60*60*1000 + `time'  // %tcDDmonCCYY_HH:MM:SS
 	
 	* indic
-	if wordcount("`indic'") != 1 {
+	if wordcount("`indic'") != 1 & "`purge'" == "" {
 		noi disp as err "you must specify one {cmd:indicator} at a time."
 		error 
 	}
@@ -92,6 +93,16 @@ qui {
 		}
 		use "`outdir'\02.input/peb_`indic'.dta", clear
 		exit
+	}
+	
+	/*====================================================================
+	Purge files
+	====================================================================*/
+	
+	if ("`purge'" == "purge") {
+		noi peb_purge purge, `country' outdir("`outdir'") ttldir("`ttldir'") /* 
+		*/  indics(`indic') datetime(`datetime')
+		exit 
 	}
 	
 	
