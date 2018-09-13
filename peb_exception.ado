@@ -60,7 +60,7 @@ qui {
 			local xlnames  "NPLUpdate"	
 		}
 		if ("`indic'" == "key") {
-			local xlnames  "KeyUpdate"
+			local xlnames  "KeyUpdate Exceptions"
 		}
 		
 		if ("`indic'" == "wup") {
@@ -157,7 +157,7 @@ qui {
 		pause exceptions - after excluding years. 
 		
 		if inlist("`indic'", "", "pov", "ine") {
-				
+			
 			* Exclude lines or gini
 			local cases "190 190c 320 550 gini"
 			foreach case of local cases {
@@ -167,6 +167,20 @@ qui {
 			}
 			
 		}
+		
+		if ("`indic'" == "key") {
+			local cases "190 320 550 B40 T60"
+			foreach case of local cases {
+				
+				local lcase = lower("`case'")
+				if (regexm("`case'", "[TB]"))  local casevar "`lcase'"
+				else                           local casevar "fgt0_`lcase'"
+				
+				drop if regexm(case, "`case'") & ex_`casevar' == "1"
+				
+			}
+		}
+		
 		
 		* drop ex_ vars
 		drop ex_*
@@ -193,4 +207,23 @@ Notes:
 Version Control:
 
 
-		
+/* 
+if ("`indic'" == "key") {
+local cases "190 320 550 B40 T60"
+foreach case of local cases {
+
+local lcase = lower("`case'")
+if (regexm("`case'", "[TB]"))  local casevar "`lcase'"
+else                           local casevar "fgt0_`lcase'"
+
+desc values`case'*, varlist 
+local vars "`r(varlist)'"
+
+foreach var of local vars {
+
+replace `var' = . if ex_`casevar' == "1"
+
+}
+}
+}
+*/

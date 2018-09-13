@@ -632,8 +632,15 @@ qui {
 		*/   date time  datetime case values
 		
 		
+		pause key - before merge with group data
 		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
 		*/ update replace  
+		
+		
+		pause key - before applying exceptions
+		peb_exception apply, outdir("`outdir'") `pause'	indic(`indic')
+		
+		
 		
 		pause key - right before saving 
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'  `pause'
