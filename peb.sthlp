@@ -50,6 +50,13 @@ Minh that has been completed by regional focal points. Only works within instruc
 {it:shp}{p_end}
 {synopt:{opt force}} Force {cmd:peb} to save data even if its data signature is 
 the same as the previous one.{p_end}
+{synopt:{opt purge}} purges the indicators files and the master file of the 
+information of a particualr country. Must be used with option {it:country()} {p_end}
+{synopt:{opt count:ry(string)}} country to be purged from final files. Use with 
+option {it: purge} {p_end}
+{synopt:{opt restore}} Restore a particular version of any file. 
+{err: under development} {p_end}
+
 {syntab:Directories}
 {synopt:{opt indir(string)}} Alternative directory to indicators input{p_end}
 {synopt:{opt outdir(string)}} Alternative directory to PEB folder. Modify directly in 
@@ -165,6 +172,15 @@ series with a 2, and so on and so forth. If there is no data available for a par
 the value of the 'comparable' variable is "", i.e., string missing value (do not confused with 
 numerical missing represented by a period '.').
 
+{phang}
+{bf:countriesin.xlsx} contains several pieces of information by country. [1] Name of the 
+as they will be presented in the final layout. [2] Name of the countries as they are 
+organized alphabetically. [3] Name of the countries in upper casses. [4] Name of the 
+corresponding poverty economist. [5] A column to identify whether or not each country 
+will have PEB. This file is read by the Excel tool via a query, filtered by those countries 
+with PEB only, and placed in sheet 'merge' in the Excel tool. 
+
+
 {marker options}{...}
 {title:Options}
 {dlgtab:Main}
@@ -219,6 +235,20 @@ Load poverty data and/or inequality data
 
 {p 10 10 2}{stata peb pov, load}{p_end}
 {p 10 10 2}{stata peb ine, load}{p_end}
+
+
+{dlgtab:Purge data}
+{pstd}
+Purge file 'peb_pov.dta' from country COL
+
+{p 10 10 2}.peb pov, countr(COL) purge {p_end}
+
+Purge file 'peb_ine.dta' and 'peb_key.dta' from country ARG
+{p 10 10 2}.peb ine key, countr(ARG) purge {p_end}
+
+Purge file 'peb_pov.dta'  from all countries
+{p 10 10 2}.peb ine key, countr(ALL) purge {p_end}
+
 
 {title:Author}
 {p}

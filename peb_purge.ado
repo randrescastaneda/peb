@@ -53,7 +53,7 @@ qui {
 			save "`outdir'\02.input/_vintage/peb_`indic'_`datetime'.dta" 
 			
 			
-			if ("`country'" ==  "all") {
+			if (lower("`country'") ==  "all") {
 				drop in 1/l
 			}
 			else {
@@ -68,7 +68,7 @@ qui {
 			* Master file
 			
 			peb master, load
-			if ("`country'" ==  "all") {
+			if (lower("`country'") ==  "all") {
 				drop if indicator == "`indic'" 
 			}
 			else {
