@@ -179,7 +179,7 @@ qui {
 		duplicates tag countrycode year case welftype type, gen(tag)
 		pause `indic' - after creating tag of replicates 
 		
-		keep if (tag ==  0| (tag >= 1 & module == "ALL"))  // All prevails over GPWG 
+		keep if (tag ==  0| (tag >= 1 & module == "GPWG"))  // GPWG prevails over ALL
 		drop tag
 		
 		* by survey. 
