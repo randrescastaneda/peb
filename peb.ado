@@ -23,8 +23,9 @@ ttldir(string)                 ///
 VCdate(string)                 ///
 trace(string)                  ///
 load  shpupdate   force        ///
-GROUPdata   pause  purge       ///
+GROUPdata   pause              ///
 COUNTry(passthru)              ///
+purge  update restore          ///
 ]
 
 
@@ -101,7 +102,7 @@ qui {
 	
 	if ("`purge'" == "purge") {
 		noi peb_purge purge, `country' outdir("`outdir'") ttldir("`ttldir'") /* 
-		*/  indics(`indic') datetime(`datetime')
+		*/  indics(`indic') datetime(`datetime') `update'
 		exit 
 	}
 	
@@ -110,7 +111,7 @@ qui {
 	Update exceptions
 	==================================================*/
 	peb_exception load, outdir("`outdir'") ttldir("`ttldir'") /* 
-	*/ datetime(`datetime') indic("`indic'") `pause'
+	*/ datetime(`datetime') indic("`indic'") `pause' 
 	
 	
 	/*==================================================
@@ -362,12 +363,7 @@ qui {
 		
 		gen indicator = "npl"
 		gen case      = "nopr"
-		gen source    = "TTL"
-		gen date      = "8/27/2018"     // Arbitrary date
-		gen time      = "10:00:00 AM"   // Arbitrary time
-		
-		_gendatetime_var date time
-		
+		gen source    = ""		
 		tempfile nopr // number of poor
 		save `nopr'
 		
@@ -416,7 +412,11 @@ qui {
 		
 		* drop if inlist(values, 0, .)  // if TTL didn't provide info
 		keep if maxdate == 1
+		drop if date == .
+		
 		append using `nopr'
+		
+		bysort country year (date): replace date = date[_n-1] if (date == .)
 		
 		pause npl- after keeping max date
 		
@@ -426,7 +426,6 @@ qui {
 		*/   date time  datetime case values
 		
 		gen ttl = 1
-		drop if date == .
 		tempfile ttlfile
 		save `ttlfile' 
 		
@@ -729,6 +728,7 @@ qui {
 		replace writeup = subinstr(writeup, `"“"', `"""', .)
 		replace writeup = subinstr(writeup, `"”"', `"""', .)
 		replace writeup = subinstr(writeup, `"’"', `"'"', .)
+		replace writeup = subinstr(writeup, `"  "', `" "', .)
 		
 		
 		replace writeup = subinstr(writeup, `"aren't"'    , `"are not"', .)

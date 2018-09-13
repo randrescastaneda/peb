@@ -54,6 +54,8 @@ the same as the previous one.{p_end}
 information of a particualr country. Must be used with option {it:country()} {p_end}
 {synopt:{opt count:ry(string)}} country to be purged from final files. Use with 
 option {it: purge} {p_end}
+{synopt:{opt update}} Executes the creation of the PEB file after it was been purged. 
+Only works with option {it:purge} {p_end}
 {synopt:{opt restore}} Restore a particular version of any file. 
 {err: under development} {p_end}
 

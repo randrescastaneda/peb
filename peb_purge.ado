@@ -19,7 +19,7 @@ country(string)                ///
 ttldir(string)                   ///
 outdir(string)                   ///
 indics(string)                   ///
-pause                            ///
+pause update                     ///
 datetime(numlist)                ///
 ]
 
@@ -39,7 +39,7 @@ if ("`indics'" == "all") local indics "pov ine key"
 
 qui {
 	if ("`action'" == "purge") {
-		
+		noi disp in y "Purging files"
 		peb master, load
 		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_pgd_master_`datetime'")
 		save "`outdir'\02.input/_vintage/peb_pgd_master_`datetime'.dta" 
@@ -80,6 +80,14 @@ qui {
 			
 		}
 		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_master", replace)
+		
+		* update is required. 
+		if ("`update'" == "update") {
+			noi disp in y "Updating files"
+			foreach indic of local indics {
+				peb `indic', force
+			}
+		}
 		
 	} // end of purge
 	
