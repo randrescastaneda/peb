@@ -428,7 +428,7 @@ qui {
 		gen ttl = 1
 		drop if date == .
 		tempfile ttlfile
-		save `ttlfile'
+		save `ttlfile' 
 		
 		pause npl- after saving ttlfile
 		
@@ -581,12 +581,15 @@ qui {
 		indicators key, load shape(wide) `pause'
 		
 		* T-1 for Eusilc data
-		replace year = strofreal(real(year) -1) if (regexm(filename, "EU\-"))
+		replace year = strofreal(real(year) -1) if /* 
+		*/ (regexm(filename, "EU\-") | (countrycode == "MYS")) // add Malaysia
 		
+		
+		/* 
 		pause key - before applying exceptions
 		peb_exception apply, outdir("`outdir'") `pause'	indic(`indic')
 		pause key - after applying exceptions
-		
+		 */
 		destring year, force replace // convert to values
 		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
 		local vcvar = "`r(`vconfirm')'" 
@@ -791,6 +794,10 @@ qui {
 		foreach ll of loc plines{
 			gen values`=100*`ll'' = `ll'*cpi2011*icp2011
 		}
+		
+		
+		* Fix for Malaysia
+		replace year = year - 1 if countrycode == "MYS"
 		
 		peb_addregion
 		
