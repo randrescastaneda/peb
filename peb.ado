@@ -37,7 +37,7 @@ else                      pause off
 qui {
 	
 	*------------------ SSC commands  ------------------
-	local sscados "dirlist unique"
+	local sscados "dirlist unique missings"
 	foreach ado of local sscados {
 		cap which `ado'
 		if (_rc) ssc install `ado'
@@ -599,8 +599,15 @@ qui {
 		
 		pause key - after merging temp keyu
 		* clean data 
+		
+		sort countrycode year line2disp
+		replace publish   = publish[_n-1]   if (publish[_n-1] != "" & publish == "")
+		replace line2disp = line2disp[_n-1] if (line2disp[_n-1] != . & line2disp == .)
+		
+		sort countrycode year precase line2disp
 		replace line2disp = 190 if line2disp == . 
 		replace publish = "YES" if publish == ""
+		
 		
 		
 		reshape long values, i(countrycode  precase) /* 
