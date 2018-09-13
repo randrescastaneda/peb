@@ -57,7 +57,7 @@ qui {
 			local xlnames  "Exceptions comparable"
 		}
 		if ("`indic'" == "npl") {
-			local xlnames  "NPLUpdate"	
+			local xlnames  "NPLUpdate comparable"	
 		}
 		if ("`indic'" == "key") {
 			local xlnames  "KeyUpdate Exceptions"
