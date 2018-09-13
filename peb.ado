@@ -354,6 +354,23 @@ qui {
 		tempfile comparafile
 		save `comparafile'
 		
+		peb exceptions, load
+		keep countrycode ex_year ex_nu_poor_npl
+		keep if ex_nu_poor_npl != ""
+		rename (ex_year ex_nu_poor_npl ) (year values)
+		destring values, replace force 
+		
+		gen indicator = "npl"
+		gen case      = "nopr"
+		gen source    = "TTL"
+		gen date      = "8/27/2018"     // Arbitrary date
+		gen time      = "10:00:00 AM"   // Arbitrary time
+		
+		_gendatetime_var date time
+		
+		tempfile nopr // number of poor
+		save `nopr'
+		
 		
 		peb nplupdate, load `pause'
 		* fix dates
@@ -399,6 +416,7 @@ qui {
 		
 		* drop if inlist(values, 0, .)  // if TTL didn't provide info
 		keep if maxdate == 1
+		append using `nopr'
 		
 		pause npl- after keeping max date
 		
