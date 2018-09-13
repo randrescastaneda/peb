@@ -50,7 +50,7 @@ if ("`tver'" == "" ) {
  
 local sheets welfaretype_all
 
-local countries "CHN CPV ZWE MKD IND"
+local countries "CHN CPV ZWE MKD IND SSD"
 local countries_: subinstr local countries " " "|", all
 
 
