@@ -579,6 +579,9 @@ qui {
 		* use "`indir'\indicators_`indic'_wide.dta", clear
 		indicators key, load shape(wide) `pause'
 		
+		bysort countrycode: egen haseusilc = total(regexm(filename, "EU\-"))
+		drop if (!regexm(filename, "EU\-") & haseusilc != 0 & region == "ECA") 
+		
 		* T-1 for Eusilc data
 		replace year = strofreal(real(year) -1) if /* 
 		*/ (regexm(filename, "EU\-") | (countrycode == "MYS")) // add Malaysia
