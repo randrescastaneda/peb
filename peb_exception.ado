@@ -83,6 +83,18 @@ qui {
 				replace `var' = trim(`var')	
 			}
 			
+			cap {
+				tempvar t 
+				gen `t' = date if regexm(time, "/[0-9]+$")
+				replace date = time if `t' != ""
+				replace time = `t' if `t' != ""
+				
+				cap drop __00*
+			}
+			if (_rc) {
+					noi disp "no need to make date change in `xlname'"
+			}
+			
 			* reshape long values, i(code) j(condition) string
 			
 			cap datasignature confirm using "`outdir'/02.input/_datasignature/peb_`sufname'", strict 
