@@ -54,7 +54,7 @@ qui {
 			
 			
 			if (lower("`country'") ==  "all") {
-				drop in 1/l
+				cap drop in 1/l
 			}
 			else {
 				drop if countrycode == "`country'"

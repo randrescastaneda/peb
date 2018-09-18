@@ -126,7 +126,7 @@ qui {
 		
 		cap drop _merge
 		if inlist("`indic'", "shp", "key") { // this has to be changed in next round.
-			drop in 1/l
+			cap drop in 1/l
 		}
 		merge 1:1 `mergevar' using `indicfile', replace update  nogen
 		pause save - right after merge with indicators file

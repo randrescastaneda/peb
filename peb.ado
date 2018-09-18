@@ -235,7 +235,7 @@ qui {
 		
 		*----------Save file
 		if (regexm("`trace'", "E|Ex")) set trace on
-		peb_exception apply, outdir("`outdir'") `pause' // exceptions
+		peb_exception apply, outdir("`outdir'") `pause' indic(`indic')  // exceptions
 		set trace off
 		
 		rename filename source 
@@ -378,9 +378,11 @@ qui {
 		merge m:1 countrycode using "`outdir'/02.input/peb_exceptions.dta", /*  
 		*/ nogen keep(master match) keepusing(ex_nu_poor_npl ex_spell_pov_ine)
 		
+		pause npl - right after merge with  exceptions
+		
 		* Add comparable year
 		merge m:1 countrycode year  using `comparafile', /*  
-		*/  keep(match) keepusing(comparable) nogen
+		*/  keep(match) keepusing(comparable) 
 		
 		destring comparable, replace force
 		
@@ -600,6 +602,10 @@ qui {
 		
 		* Max year per country
 		
+		pause key - before applying exceptions 1
+		peb_exception apply, outdir("`outdir'") `pause' 
+		destring year, replace force 
+		
 		
 		pause key - before keeping max year per country
 		tempvar myear
@@ -667,7 +673,7 @@ qui {
 		*/ update replace  
 		
 		
-		pause key - before applying exceptions
+		pause key - before applying exceptions  2
 		peb_exception apply, outdir("`outdir'") `pause'	indic(`indic')
 		
 		
