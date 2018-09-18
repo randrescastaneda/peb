@@ -83,18 +83,7 @@ qui {
 				replace `var' = trim(`var')	
 			}
 			
-			cap {
-				tempvar t 
-				gen `t' = date if regexm(time, "/[0-9]+$")
-				replace date = time if `t' != ""
-				replace time = `t' if `t' != ""
-				
-				cap drop __00*
-			}
-			if (_rc) {
-					noi disp "no need to make date change in `xlname'"
-			}
-			
+		
 			* reshape long values, i(code) j(condition) string
 			
 			cap datasignature confirm using "`outdir'/02.input/_datasignature/peb_`sufname'", strict 
@@ -139,6 +128,7 @@ qui {
 		gen ex_2drop = 0
 		
 		pause exceptions - before excluding countries with years to exclude
+		cap tostring year, replace force 
 		levelsof countrycode if ex_spell_pov_ine != "", local(codes)
 		foreach code of local codes {
 			sum ex_n if countrycode == "`code'", meanonly
@@ -168,7 +158,7 @@ qui {
 		
 		pause exceptions - after excluding years. 
 		
-		if inlist("`indic'", "", "pov", "ine") {
+		if inlist("`indic'", "pov", "ine") {
 			
 			* Exclude lines or gini
 			local cases "190 190c 320 550 gini"
