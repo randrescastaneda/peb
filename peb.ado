@@ -24,7 +24,7 @@ VCdate(string)                 ///
 trace(string)                  ///
 load  shpupdate   force        ///
 GROUPdata   pause              ///
-COUNTry(passthru)              ///
+COUNTry(passthru) povcalnet    ///
 purge  update restore          ///
 ]
 
@@ -81,7 +81,13 @@ qui {
 		noi disp as err "you must specify one {cmd:indicator} at a time."
 		error 
 	}
+
 	
+/* ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
+   ------------------------------------------------------------------------------
+                            Auxiliary Options
+   ------------------------------------------------------------------------------
+   ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>< */
 	
 	/*====================================================================
 	Load files
@@ -106,8 +112,55 @@ qui {
 		exit 
 	}
 	
+	/*====================================================================
+	Data to Povcalnet
+	====================================================================*/
 	
-	/*==================================================
+	if ("`povcalnet'" == "povcalnet") {
+		
+		if ("`indic'" == "npl") {
+			noi disp "Save national poverty rate for PovcalNet team"
+			
+			peb npl, load
+			drop id indicator
+			drop if regexm(case, "gdppc|gnppc|popu|pttl|spell_pov_ine|nopr")
+			replace case = "fgt0" if case == "line"
+			
+			reshape wide values, i(region countrycode source comparable year) j(case) string
+			rename values* *
+			destring year, replace force
+			
+			sort country year date time
+			local outputdir "`outdir'\03.output\01.data\povcalnet"
+			local filename "national_poverty"
+			
+			cap noi datasignature confirm using /* 
+		*/ "`outdir'\02.input/_datasignature/peb_`filename'", strict
+			
+			if (_rc) {				
+				datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`filename'", replace)
+				save "`outputdir'/_vintage/peb_`filename'_`datetime'.dta" 
+				save "`outputdir'/peb_`filename'.dta", replace
+				noi disp in y "file /peb_`filename'.dta has been updated." 
+			}
+			else {
+				noi disp "file /peb_`filename'.dta is up to date."
+			}
+			noi disp   "See file {browse `outputdir':here}" _n /* 
+		*/   `"Open file {stata use "`outputdir'/peb_`filename'.dta", clear:here}"'
+		} // end of npl 
+		
+		exit 
+	}
+	
+	
+/* ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
+   ------------------------------------------------------------------------------
+                            Main Calculations
+   ------------------------------------------------------------------------------
+   ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>< */
+
+	 /*==================================================
 	Update exceptions
 	==================================================*/
 	peb_exception load, outdir("`outdir'") ttldir("`ttldir'") /* 
@@ -122,8 +175,7 @@ qui {
 		*/  indir("`indir'")  `pause'
 		exit 
 	}
-	
-	
+	 
 	/*==================================================
 	1: Basic indicators
 	==================================================*/
@@ -593,7 +645,7 @@ qui {
 		pause key - before applying exceptions
 		peb_exception apply, outdir("`outdir'") `pause'	indic(`indic')
 		pause key - after applying exceptions
-		 */
+		*/
 		destring year, force replace // convert to values
 		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
 		local vcvar = "`r(`vconfirm')'" 
