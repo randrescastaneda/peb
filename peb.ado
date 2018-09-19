@@ -24,7 +24,7 @@ VCdate(string)                 ///
 trace(string)                  ///
 load  shpupdate   force        ///
 GROUPdata   pause              ///
-COUNTry(passthru)              ///
+COUNTry(passthru) povcalnet    ///
 purge  update restore          ///
 ]
 
@@ -81,7 +81,13 @@ qui {
 		noi disp as err "you must specify one {cmd:indicator} at a time."
 		error 
 	}
+
 	
+/* ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
+   ------------------------------------------------------------------------------
+                            Auxiliary Options
+   ------------------------------------------------------------------------------
+   ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>< */
 	
 	/*====================================================================
 	Load files
@@ -106,8 +112,66 @@ qui {
 		exit 
 	}
 	
+	/*====================================================================
+	Restore files
+	====================================================================*/
+
+	if ("`restore'" == "restore") {
+		noi peb_purge restore, outdir("`outdir'") ttldir("`ttldir'") /* 
+		*/  indics(`indic') datetime(`datetime')
+		exit 
+	}
 	
-	/*==================================================
+	
+	/*====================================================================
+	Data to Povcalnet
+	====================================================================*/
+	
+	if ("`povcalnet'" == "povcalnet") {
+		
+		if ("`indic'" == "npl") {
+			noi disp "Save national poverty rate for PovcalNet team"
+			
+			peb npl, load
+			drop id indicator
+			drop if regexm(case, "gdppc|gnppc|popu|pttl|spell_pov_ine|nopr")
+			replace case = "fgt0" if case == "line"
+			
+			reshape wide values, i(region countrycode source comparable year) j(case) string
+			rename values* *
+			destring year, replace force
+			
+			sort country year date time
+			local outputdir "`outdir'\03.output\01.data\povcalnet"
+			local filename "national_poverty"
+			
+			cap noi datasignature confirm using /* 
+		*/ "`outdir'\02.input/_datasignature/peb_`filename'", strict
+			
+			if (_rc) {				
+				datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`filename'", replace)
+				save "`outputdir'/_vintage/peb_`filename'_`datetime'.dta" 
+				save "`outputdir'/peb_`filename'.dta", replace
+				noi disp in y "file /peb_`filename'.dta has been updated." 
+			}
+			else {
+				noi disp "file /peb_`filename'.dta is up to date."
+			}
+			noi disp   "See file {browse `outputdir':here}" _n /* 
+		*/   `"Open file {stata use "`outputdir'/peb_`filename'.dta", clear:here}"'
+		} // end of npl 
+		
+		exit 
+	}
+	
+	
+/* ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
+   ------------------------------------------------------------------------------
+                            Main Calculations
+   ------------------------------------------------------------------------------
+   ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>< */
+
+	 /*==================================================
 	Update exceptions
 	==================================================*/
 	peb_exception load, outdir("`outdir'") ttldir("`ttldir'") /* 
@@ -122,8 +186,7 @@ qui {
 		*/  indir("`indir'")  `pause'
 		exit 
 	}
-	
-	
+	 
 	/*==================================================
 	1: Basic indicators
 	==================================================*/
@@ -235,7 +298,7 @@ qui {
 		
 		*----------Save file
 		if (regexm("`trace'", "E|Ex")) set trace on
-		peb_exception apply, outdir("`outdir'") `pause' // exceptions
+		peb_exception apply, outdir("`outdir'") `pause' indic(`indic')  // exceptions
 		set trace off
 		
 		rename filename source 
@@ -378,9 +441,11 @@ qui {
 		merge m:1 countrycode using "`outdir'/02.input/peb_exceptions.dta", /*  
 		*/ nogen keep(master match) keepusing(ex_nu_poor_npl ex_spell_pov_ine)
 		
+		pause npl - right after merge with  exceptions
+		
 		* Add comparable year
 		merge m:1 countrycode year  using `comparafile', /*  
-		*/  keep(match) keepusing(comparable) nogen
+		*/  keep(match) keepusing(comparable) 
 		
 		destring comparable, replace force
 		
@@ -579,6 +644,9 @@ qui {
 		* use "`indir'\indicators_`indic'_wide.dta", clear
 		indicators key, load shape(wide) `pause'
 		
+		bysort countrycode: egen haseusilc = total(regexm(filename, "EU\-"))
+		drop if (!regexm(filename, "EU\-") & haseusilc != 0 & region == "ECA") 
+		
 		* T-1 for Eusilc data
 		replace year = strofreal(real(year) -1) if /* 
 		*/ (regexm(filename, "EU\-") | (countrycode == "MYS")) // add Malaysia
@@ -588,7 +656,7 @@ qui {
 		pause key - before applying exceptions
 		peb_exception apply, outdir("`outdir'") `pause'	indic(`indic')
 		pause key - after applying exceptions
-		 */
+		*/
 		destring year, force replace // convert to values
 		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
 		local vcvar = "`r(`vconfirm')'" 
@@ -596,6 +664,10 @@ qui {
 		keep if welfarevar == "welfare"
 		
 		* Max year per country
+		
+		pause key - before applying exceptions 1
+		peb_exception apply, outdir("`outdir'") `pause' 
+		destring year, replace force 
 		
 		
 		pause key - before keeping max year per country
@@ -664,7 +736,7 @@ qui {
 		*/ update replace  
 		
 		
-		pause key - before applying exceptions
+		pause key - before applying exceptions  2
 		peb_exception apply, outdir("`outdir'") `pause'	indic(`indic')
 		
 		

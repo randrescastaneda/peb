@@ -37,27 +37,33 @@ Where {it:indicator} refers to the shorthand of the file to be included in the P
 {cmd:peb} organizes and exports data from microdata{p_end}
 {synopt:{opt load}} Load the corresponding file to {it:indicator}. It does not organizes 
 neither exports data.{p_end}
+{synopt:{opt force}} Force {cmd:peb} to save data even if its data signature is 
+the same as the previous one.{p_end}
+
 {syntab:Debugging}
 {synopt:{opt trace(indicator)}} Set trace on in the section of the process where 
 {it:indicator} is executed.{p_end}
 {synopt:{opt pause}}  Activate strategic pause points along the indicators files 
 for debugging purposes. See {help pause}{p_end}
+
+{syntab:Auxiliary}
+{synopt:{opt povcalnet}} Creates files to share with PovcalNet team. Requires 
+{it:indicator}. For now, it only works for indicator {it:npl}{p_end}
+
 {syntab:Advanced}
 {synopt:{opt vc:date(string)}} Vintage control date of input file from pre-calculated 
 indicators. see {help indicators##vc_vars:indicators}{p_end}
 {synopt:{opt shpupdate}} update shared prosperity spell from Excel file provided by 
 Minh that has been completed by regional focal points. Only works within instruction 
 {it:shp}{p_end}
-{synopt:{opt force}} Force {cmd:peb} to save data even if its data signature is 
-the same as the previous one.{p_end}
+{syntab:Purge}
 {synopt:{opt purge}} purges the indicators files and the master file of the 
 information of a particualr country. Must be used with option {it:country()} {p_end}
 {synopt:{opt count:ry(string)}} country to be purged from final files. Use with 
 option {it: purge} {p_end}
 {synopt:{opt update}} Executes the creation of the PEB file after it was been purged. 
 Only works with option {it:purge} {p_end}
-{synopt:{opt restore}} Restore a particular version of any file. 
-{err: under development} {p_end}
+{synopt:{opt restore}} Restore a particular version of any file.{p_end}
 
 {syntab:Directories}
 {synopt:{opt indir(string)}} Alternative directory to indicators input{p_end}
@@ -245,11 +251,28 @@ Purge file 'peb_pov.dta' from country COL
 
 {p 10 10 2}.peb pov, countr(COL) purge {p_end}
 
+{pstd}
 Purge file 'peb_ine.dta' and 'peb_key.dta' from country ARG
+
 {p 10 10 2}.peb ine key, countr(ARG) purge {p_end}
 
+{pstd}
 Purge file 'peb_pov.dta'  from all countries
-{p 10 10 2}.peb ine key, countr(ALL) purge {p_end}
+
+{p 10 10 2}.peb pov, countr(all) purge {p_end}
+
+{dlgtab:Purge data}
+{pstd}
+Restore 'peb_pov.dta' to a particular vintage. You just have to click on the date 
+and follow the instructions. 
+
+{p 10 10 2}.peb pov, restore {p_end}
+
+{dlgtab:povcalnet}
+{pstd}
+Update file with national poverty rates to share with PovcalNet
+
+{p 10 10 2}{stata peb npl, povcalnet}{p_end}
 
 
 {title:Author}
