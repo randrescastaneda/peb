@@ -63,8 +63,7 @@ information of a particualr country. Must be used with option {it:country()} {p_
 option {it: purge} {p_end}
 {synopt:{opt update}} Executes the creation of the PEB file after it was been purged. 
 Only works with option {it:purge} {p_end}
-{synopt:{opt restore}} Restore a particular version of any file. 
-{err: under development} {p_end}
+{synopt:{opt restore}} Restore a particular version of any file.{p_end}
 
 {syntab:Directories}
 {synopt:{opt indir(string)}} Alternative directory to indicators input{p_end}
@@ -262,6 +261,12 @@ Purge file 'peb_pov.dta'  from all countries
 
 {p 10 10 2}.peb pov, countr(all) purge {p_end}
 
+{dlgtab:Purge data}
+{pstd}
+Restore 'peb_pov.dta' to a particular vintage. You just have to click on the date 
+and follow the instructions. 
+
+{p 10 10 2}.peb pov, restore {p_end}
 
 {dlgtab:povcalnet}
 {pstd}
