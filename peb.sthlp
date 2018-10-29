@@ -24,10 +24,10 @@
 {cmdab:peb}
 {it:indicator}
 [{cmd:,}
-{it:options}]
+{it:options}] 
 
 {pstd}
-Where {it:indicator} refers to the shorthand of the file to be included in the PEB output. 
+Where {it:indicator} refers to the shorthand of the file to be included in the PEB output. Hola
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
