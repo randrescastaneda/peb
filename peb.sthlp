@@ -27,7 +27,7 @@
 {it:options}] 
 
 {pstd}
-Where {it:indicator} refers to the shorthand of the file to be included in the PEB output. Hola
+Where {it:indicator} refers to the shorthand of the file to be included in the PEB output.
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
