@@ -223,10 +223,6 @@ qui {
 		*----- Organize data 
 		destring year, force replace // convert to values
 		
-		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
-		local vcvar = "`r(`vconfirm')'" 
-		keep if `vcvar' == 1
-		
 		*------- homogenize welfare type
 		replace welftype = "CONS" if (region == "ECA" & !regexm(filename, "EU\-")) // not EU-SILC in ECA
 		replace welftype = "INC"  if (regexm(filename, "EU\-"))  // EU-SILC
@@ -658,9 +654,8 @@ qui {
 		pause key - after applying exceptions
 		*/
 		destring year, force replace // convert to values
-		noi peb_vcontrol, `maxdate' vcdate(`vcdate')
-		local vcvar = "`r(`vconfirm')'" 
-		keep if `vcvar' == 1
+		
+		keep if _touse == 1
 		keep if welfarevar == "welfare"
 		
 		* Max year per country
