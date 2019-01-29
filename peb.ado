@@ -55,8 +55,8 @@ qui {
 	==================================================*/
 	* Directory Paths
 	if ("`indir'"  == "") local indir  "//wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
-	if ("`outdir'" == "") local outdir "//wbgfscifs01\GTSD\03.projects_corp\01.PEB\01.PEB_AM18\01.PEB_AM18_QA"
-	if ("`ttldir'" == "") local ttldir "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB\AM2018\02.tool_output\01.PovEcon_input"
+	if ("`outdir'" == "") local outdir "\\wbgfscifs01\gtsd\03.projects_corp\01.PEB\01.PEB_SM19\01.PEB_SM19_QA"
+	if ("`ttldir'" == "") local ttldir "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB\SM2019\02.tool_output\01.PovEcon_input"
 	
 	if regexm("`indir'", "(.*\\)([a-zA-Z0-9\.]+)$") /* 
   */	     local spdir = regexs(1)+"02.SharedProsperity"
