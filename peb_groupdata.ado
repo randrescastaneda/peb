@@ -27,7 +27,7 @@ pause                          ///
 
 if ("`pause'" != "") pause on 
 else                 pause off
-local indir "\\wbgfscifs01\gtsd\03.projects_corp\01.PEB\01.PEB_AM18\01.PEB_AM18_QA\_aux"
+local indir "\\wbgfscifs01\gtsd\03.projects_corp\01.PEB\01.PEB_SM19\01.PEB_SM19_QA\_aux"
 
 local infile "PEB_templateGroupData.xlsm"
 
