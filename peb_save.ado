@@ -26,7 +26,7 @@ qui {
 	tempfile indicfile
 	save `indicfile', replace
 	
-	local auxdir "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB\AM2018\01.tool\_aux"
+	local auxdir "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB\SM2019\01.tool\_aux"
 	
 	*-----------------------------------------------
 	* --------------- Procedure for write up file
