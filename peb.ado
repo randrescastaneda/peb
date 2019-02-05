@@ -345,7 +345,7 @@ qui {
 		*----------Save file
 		if (regexm("`trace'", "E|Ex")) set trace on
 		peb_exception apply, outdir("`outdir'") `pause' indic(`indic')  // exceptions
-		set trace off
+		if (regexm("`trace'", "E|Ex"))  set trace off
 		
 		rename filename source 
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 

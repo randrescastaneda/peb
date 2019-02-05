@@ -13,7 +13,7 @@ program define peb_save, rclass
 syntax anything(name=indic id=indicator), [  ///
 outdir(string)   pause          ///
 datetime(numlist)   force       ///
-auxdir(string)
+auxdir(string)                  ///
 ]
 
 if ("`pause'" == "pause") pause on
