@@ -21,6 +21,7 @@ outdir(string)                   ///
 indics(string)                   ///
 pause update                     ///
 datetime(numlist)                ///
+auxdir(string)                   ///
 ]
 
 
@@ -28,7 +29,6 @@ datetime(numlist)                ///
 if ("`pause'" == "pause") pause on
 else                      pause off
 
-local auxdir "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB\SM2019\01.tool\_aux"
 
 * Action
 if !inlist("`action'", "purge", "restore") {

@@ -13,6 +13,7 @@ program define peb_save, rclass
 syntax anything(name=indic id=indicator), [  ///
 outdir(string)   pause          ///
 datetime(numlist)   force       ///
+auxdir(string)
 ]
 
 if ("`pause'" == "pause") pause on
@@ -25,8 +26,6 @@ qui {
 	* Save file
 	tempfile indicfile
 	save `indicfile', replace
-	
-	local auxdir "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB\SM2019\01.tool\_aux"
 	
 	*-----------------------------------------------
 	* --------------- Procedure for write up file
