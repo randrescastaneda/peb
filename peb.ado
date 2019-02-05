@@ -20,6 +20,9 @@ syntax anything(name=indic id="indicator"), [ ///
 indir(string)                  ///
 outdir(string)                 ///
 ttldir(string)                 ///
+auxdir(string)                 ///
+meeting(string)                ///
+cyear(numlist)                 ///
 VCdate(string)                 ///
 trace(string)                  ///
 load  shpupdate   force        ///
@@ -53,11 +56,58 @@ qui {
 	/*==================================================
 	Consistency Check
 	==================================================*/
-	* Directory Paths
-	if ("`indir'"  == "") local indir  "//wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
-	if ("`outdir'" == "") local outdir "\\wbgfscifs01\gtsd\03.projects_corp\01.PEB\01.PEB_SM19\01.PEB_SM19_QA"
-	if ("`ttldir'" == "") local ttldir "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB\SM2019\02.tool_output\01.PovEcon_input"
 	
+	* working month
+	local cmonth: disp %tdnn date("`c(current_date)'", "DMY")
+	
+	*Working year
+	if ("`cyear'" != "") {
+		
+		if !inlist(length("`cyear'"), 2, 4) {
+			noi disp in red "{it:cyear()} must be either two-digit (e.g., 19) or four-digit (e.g., 2019) long"
+			error
+		}
+		if length("`cyear'") == 4 {
+			if substr("`cyear'", 1, 2) != "20" {
+				noi disp in red "the first two digits of year must be 20"
+				error
+			}
+			local cyear = substr("`cyear'", 3, 2)
+		} // if year if 4-digit long
+	}
+	else local cyear:  disp %tdyy date("`c(current_date)'", "DMY")
+	
+	* Either Annual meeting (AM) or Spring meeting (SM)
+	if ("`meeting'" != "") {
+		if !inlist("`meeting'", "SM", "AM") {
+			noi disp in red "{it:meeting()} must be either SM or AM"
+			error
+		}
+	}
+	else {
+		if inrange(`cmonth', 1, 6) local meeting "SM"
+		if inrange(`cmonth', 7, 12) local meeting "AM"
+	}
+	
+	
+	* Directory Paths
+	local pebdir    "\\wbgfscifs01\gtsd\03.projects_corp\01.PEB"
+	local povecodir "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB/`meeting'20`cyear'"
+	
+	if ("`indir'"  == "") {
+		local indir  "//wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
+	}
+	if ("`outdir'" == "") {
+		local outdir "`pebdir'/01.PEB_`meeting'`cyear'\01.PEB_`meeting'`cyear'_QA"
+	}
+	if ("`ttldir'" == "") {
+		local ttldir "`povecodir'\02.tool_output\01.PovEcon_input"
+	}
+	if ("`auxdir'" == "") {
+		local auxdir "`povecodir'\01.tool\_aux"
+	}
+	
+	* Shared prosperity input directory
 	if regexm("`indir'", "(.*\\)([a-zA-Z0-9\.]+)$") /* 
   */	     local spdir = regexs(1)+"02.SharedProsperity"
 	
@@ -108,7 +158,7 @@ qui {
 	
 	if ("`purge'" == "purge") {
 		noi peb_purge purge, `country' outdir("`outdir'") ttldir("`ttldir'") /* 
-		*/  indics(`indic') datetime(`datetime') `update'
+		*/  indics(`indic') datetime(`datetime') `update' auxdir(`auxdir')
 		exit 
 	}
 	
@@ -118,8 +168,8 @@ qui {
 
 	if ("`restore'" == "restore") {
 		noi peb_purge restore, outdir("`outdir'") ttldir("`ttldir'") /* 
-		*/  indics(`indic') datetime(`datetime')
-		exit 
+		*/  indics(`indic') datetime(`datetime') auxdir(`auxdir')
+		exit  
 	}
 	
 	
@@ -183,7 +233,7 @@ qui {
 	==================================================*/
 	if ("`groupdata'" != "") {
 		peb_groupdata `indic', outdir("`outdir'") ttldir("`ttldir'") /* 
-		*/  indir("`indir'")  `pause'
+		*/  indir("`indir'")  `pause' 
 		exit 
 	}
 	 
@@ -298,7 +348,8 @@ qui {
 		set trace off
 		
 		rename filename source 
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' `pause'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
+	 */	 `pause' auxdir("`auxdir'")
 		
 	} // end of pov and ine
 	
@@ -395,7 +446,8 @@ qui {
 		
 		* Save data
 		pause shp - before saving 
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' `pause'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
+	 */	 `pause' auxdir("`auxdir'")
 		
 	}
 	
@@ -573,7 +625,8 @@ qui {
 		*/   date time  datetime case values comparable
 		
 		pause npl - Right before saving
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' `pause'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
+	 */	 `pause' auxdir("`auxdir'")
 		
 		
 	} // End of National POverty lines and Macro indicators. 
@@ -737,7 +790,8 @@ qui {
 		
 		
 		pause key - right before saving 
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'  `pause'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
+	 */	 `pause' auxdir("`auxdir'")
 		
 	}
 	
@@ -828,7 +882,8 @@ qui {
 		keep `keepvars'
 		
 		pause wup - before saving 
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'  `pause'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
+	 */	 `pause' auxdir("`auxdir'")
 	}
 	
 	
@@ -898,7 +953,8 @@ qui {
 		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
 		*/ update replace  
 		
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")	 `force'  `pause'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
+	 */	 `pause' auxdir("`auxdir'")
 		
 	} // end of international poverty line to Local currency unit
 }
