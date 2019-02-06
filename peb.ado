@@ -85,20 +85,25 @@ qui {
 		}
 	}
 	else {
-		if inrange(`cmonth', 1, 6) local meeting "SM"
-		if inrange(`cmonth', 7, 12) local meeting "AM"
+		if inrange(`cmonth', 1, 4) local meeting "SM"
+		else if inrange(`cmonth', 5, 10) local meeting "AM"
+		else {
+			noi disp in r "There is no default version for this month of the year." _n /* 
+		 */	"Go home. Get a life! (att: Pepe)"
+			error
+		}
 	}
 	
 	
 	* Directory Paths
 	local pebdir    "\\wbgfscifs01\gtsd\03.projects_corp\01.PEB"
-	local povecodir "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB/`meeting'20`cyear'"
+	local povecodir "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB/`meeting'20`year'"
 	
 	if ("`indir'"  == "") {
 		local indir  "//wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
 	}
 	if ("`outdir'" == "") {
-		local outdir "`pebdir'/01.PEB_`meeting'`cyear'\01.PEB_`meeting'`cyear'_QA"
+		local outdir "`pebdir'/01.PEB_`meeting'`year'\01.PEB_`meeting'`year'_QA"
 	}
 	if ("`ttldir'" == "") {
 		local ttldir "`povecodir'\02.tool_output\01.PovEcon_input"
