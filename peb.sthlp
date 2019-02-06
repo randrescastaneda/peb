@@ -39,6 +39,7 @@ Where {it:indicator} refers to the shorthand of the file to be included in the P
 neither exports data.{p_end}
 {synopt:{opt force}} Force {cmd:peb} to save data even if its data signature is 
 the same as the previous one.{p_end}
+{synopt:{opt noex:cel}}Save results in dta but not in Excel files.{p_end}
 
 {syntab:Debugging}
 {synopt:{opt trace(indicator)}} Set trace on in the section of the process where 
@@ -66,11 +67,19 @@ Only works with option {it:purge} {p_end}
 {synopt:{opt restore}} Restore a particular version of any file.{p_end}
 
 {syntab:Directories}
-{synopt:{opt indir(string)}} Alternative directory to indicators input{p_end}
-{synopt:{opt outdir(string)}} Alternative directory to PEB folder. Modify directly in 
-the ado-file when a new round of the PEB comes in time.{p_end}
-{synopt:{opt ttldir(string)}} Alternative directory to Exceptions database. This 
-does not need to change from one round to the other.{p_end}
+{synopt:{opt year(string)}}It could be either {it:AM} (Annual meetings) or {it:SM} 
+(Spring meetings). By default it uses the rule {help peb##meeting:below}. {p_end}
+{synopt:{opt meeting(string)}}year of the PEB. It could be a four-digit number (e.g., 2019) 
+or a two-digit number (e.g., 19).{p_end}
+{synopt:{opt indir(string)}}Directory of datasets with results from 
+{help indicators} package. Currently, it is here: 
+{browse "//wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"}{p_end}
+{synopt:{opt outdir(string)}}Directory with results. see {help peb##outdir:below}{p_end}
+{synopt:{opt ttldir(string)}}Directory with exceptions datasets. See 
+{help peb##ttldir:below}{p_end}
+{synopt:{opt auxdir(string)}}Directory to save peb_master.xlsx and  
+peb_wup.xlsx files that is accessible to poverty economist. See 
+{help peb##auxdir:below}{p_end}
 {synoptline}
 {p2colreset}{...}
 {p 4 6 2}
@@ -190,11 +199,17 @@ with PEB only, and placed in sheet 'merge' in the Excel tool.
 
 
 {marker options}{...}
-{title:Options}
+{title:Options }{err: Section in progress}
 {dlgtab:Main}
 
 {phang}
 {opt load}  
+
+{phang}
+{opt noex:cel} Prevent {cmd:peb} from saving the excel file but it does save the dta 
+files. Given that that dta files change, the data signature changes as well. If the 
+user uses {it:noexcel} option and has checked and confirmed that the output 
+comes up as desired, she must use option {it:force} to update the Excel files. 
 
 {phang}
 {opt group:data}  
@@ -206,17 +221,56 @@ with PEB only, and placed in sheet 'merge' in the Excel tool.
 {phang}
 {opt pause}  
 
+{dlgtab:Directories}
+
+{marker meeting}{...}
+{phang}
+{opt meeting(string)} It could be either {it:AM} (Annual meetings) or {it:SM} 
+(Spring meetings). By default it is {it:SM} if the month of execution is between Jannuary and 
+April and {it:AM} if it between May and October. If {cmd:peb} is executed in November or 
+December, there is no default option, for (1) there should not be PEB work at that time and 
+(2) it is impossible to know whether the user wants to prepare for the next PEB or is revise the 
+most recent one. 
+
+{phang}
+{opt year(string)} Year of the PEB. It could be a four-digit number (e.g., 2019) 
+or a two-digit number (e.g., 19). Be default it uses the current calendar year. 
+
+{phang}
+{opt indir(string)} Directory of datasets with results from {help indicators} 
+package. Currently, it is here: 
+{browse "//wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"}
+
+{marker outdir}{...}
+{phang}
+{opt outdir(string)} Is the directory where the results from {cmd:peb} 
+are saved. Thus, it depends on the current version of the PEB. If the user knows the whole path 
+it could be specified in here. Otherwise {cmd:peb} uses the following rule. 
+
+{p 10 10 2}.local pebdir {browse "\\wbgfscifs01\gtsd\03.projects_corp\01.PEB"}{p_end}
+{p 10 10 2}.local outdir "`pebdir'/01.PEB_`meeting'`year'\01.PEB_`meeting'`year'_QA"{p_end}
+
+{marker ttldir}{...}
+{phang}
+{opt ttldir(string)}Directory with datasets of exceptions. By default it uses the following 
+rule:
+
+{p 10 10 2}.local povecodir
+ "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB/`meeting'20`year'"{p_end}
+{p 10 10 2}.local ttldir "`povecodir'\02.tool_output\01.PovEcon_input"{p_end}
+
+{marker auxdir}{...}
+{phang}
+{opt auxdir(string)} Directory to save peb_master.xlsx and peb_wup.xlsx files 
+that is accessible to poverty economist. Be default it uses the following rule:
+
+{p 10 10 2}.local povecodir
+ "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB/`meeting'20`year'"{p_end}
+{p 10 10 2}.local auxdir "`povecodir'\01.tool\_aux"{p_end}
+{pmore}
+{err: Note:} It uses the same directory ({it:povecodir}) as the {it:ttldir()}
+
 {dlgtab:Advanced}
-
-{phang}
-{opt indir(string)}  
-
-{phang}
-{opt outdir(string)}  
-
-{phang}
-{opt ttldir(string)}  
-
 {phang}
 {opt vc:date(string)}  
 
@@ -236,6 +290,16 @@ master file must be done consciously.
 {p 10 10 2}.peb key{p_end}
 {p 10 10 2}.peb npl{p_end}
 {p 10 10 2}.peb wup{p_end}
+
+{dlgtab:noexcel}
+{pstd}
+in the following sequence the user [1] create results without Excel file, [2] create 
+results without option {it:force} (which does not change anything), and [3] updates 
+the excel files by using option {it:force}. 
+
+{p 10 10 2}{stata peb ine, noexcel} // this creates dta but not excel.{p_end}
+{p 10 10 2}{stata peb ine} // this does not do anything.{p_end}
+{p 10 10 2}{stata peb ine, force} // this replaces current excel files in memory{p_end}
 
 {dlgtab:Load data}
 {pstd}
@@ -261,7 +325,7 @@ Purge file 'peb_pov.dta'  from all countries
 
 {p 10 10 2}.peb pov, countr(all) purge {p_end}
 
-{dlgtab:Purge data}
+{dlgtab:retore data}
 {pstd}
 Restore 'peb_pov.dta' to a particular vintage. You just have to click on the date 
 and follow the instructions. 
