@@ -61,21 +61,21 @@ qui {
 	local cmonth: disp %tdnn date("`c(current_date)'", "DMY")
 	
 	*Working year
-	if ("`cyear'" != "") {
+	if ("`year'" != "") {
 		
-		if !inlist(length("`cyear'"), 2, 4) {
-			noi disp in red "{it:cyear()} must be either two-digit (e.g., 19) or four-digit (e.g., 2019) long"
+		if !inlist(length("`year'"), 2, 4) {
+			noi disp in red "{it:year()} must be either two-digit (e.g., 19) or four-digit (e.g., 2019) long"
 			error
 		}
-		if length("`cyear'") == 4 {
-			if substr("`cyear'", 1, 2) != "20" {
+		if length("`year'") == 4 {
+			if substr("`year'", 1, 2) != "20" {
 				noi disp in red "the first two digits of year must be 20"
 				error
 			}
-			local cyear = substr("`cyear'", 3, 2)
+			local year = substr("`year'", 3, 2)
 		} // if year if 4-digit long
 	}
-	else local cyear:  disp %tdyy date("`c(current_date)'", "DMY")
+	else local year:  disp %tdyy date("`c(current_date)'", "DMY")
 	
 	* Either Annual meeting (AM) or Spring meeting (SM)
 	if ("`meeting'" != "") {
