@@ -253,7 +253,7 @@ qui {
 		save `comparafile'
 		
 		* use "`indir'\indicators_`indic'_long.dta", clear
-		indicators `indic', load shape(long) `pause'
+		indicators `indic', load shape(long) `pause' vcdate(`vcdate')
 		
 		* ---- Indicator-specific conditions
 		
@@ -551,7 +551,7 @@ qui {
 		
 		*-------------------- Data from WDI
 		* use "`indir'\indicators_wdi_long.dta", clear
-		indicators wdi, load shape(long) `pause'
+		indicators wdi, load shape(long) `pause' vcdate(`vcdate')
 		* keep if inlist(case, "si_pov_nahc","sp_pop_totl", "ny_gdp_pcap_pp_kd","ny_gnp_pcap_kd")
 		keep if inlist(case, "sp_pop_totl","ny_gdp_pcap_pp_kd","ny_gnp_pcap_kd")
 		
@@ -696,7 +696,7 @@ qui {
 		
 		* Load indicators file
 		* use "`indir'\indicators_`indic'_wide.dta", clear
-		indicators key, load shape(wide) `pause'
+		indicators key, load shape(wide) `pause' vcdate(`vcdate')
 		
 		bysort countrycode: egen haseusilc = total(regexm(filename, "EU\-"))
 		drop if (!regexm(filename, "EU\-") & haseusilc != 0 & region == "ECA") 
@@ -1061,7 +1061,7 @@ peb_exception load, outdir("`outdir'") ttldir("`ttldir'") /*
 Shared Prosperity using data from indicators.ado
 ==================================================*/
 * use "`indir'\indicators_`indic'_long.dta", clear
-indicators `indic', load shape(long) `pause'
+indicators `indic', load shape(long) `pause' vcdate(`vcdate')
 
 destring year, force replace // convert to values
 noi peb_vcontrol, `maxdate' vcdate(`vcdate')
