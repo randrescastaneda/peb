@@ -14,6 +14,7 @@ syntax anything(name=indic id=indicator), [  ///
 outdir(string)   pause          ///
 datetime(numlist)   force       ///
 auxdir(string)                  ///
+noexcel                         ///
 ]
 
 if ("`pause'" == "pause") pause on
@@ -26,6 +27,15 @@ qui {
 	* Save file
 	tempfile indicfile
 	save `indicfile', replace
+	
+	if ("`force'" == "force") {
+		global peb_excel_use = 0
+	}
+	if ("${peb_excel_use}" == "1") {
+		noi disp in r "Warning: " in y "You previously used option {it:noexcel}. " _n /* 
+	 */	 "You need to use option {it:force} to replace the current version of " _n /* 
+	 */	 "the excel files."
+	}
 	
 	*-----------------------------------------------
 	* --------------- Procedure for write up file
@@ -81,12 +91,14 @@ qui {
 			save "`outdir'\02.input/peb_`indic'.dta", replace
 			noi disp in y "file /peb_`indic'.dta has been updated"
 			
-			cap export excel using "`outdir'\05.tools\peb_`indic'.xlsx" , /* 
-			*/  replace first(variable) sheet(peb_`indic')
-			
-			* Update WUP in PEs directory
-			cap export excel using "`auxdir'\peb_`indic'.xlsx" , /* 
-			*/  replace first(variable) sheet(peb_`indic')
+			if ("`excel'" == "") {
+				cap export excel using "`outdir'\05.tools\peb_`indic'.xlsx" , /* 
+				*/  replace first(variable) sheet(peb_`indic')
+				
+				* Update WUP in PEs directory
+				cap export excel using "`auxdir'\peb_`indic'.xlsx" , /* 
+				*/  replace first(variable) sheet(peb_`indic')
+			}
 			
 			shell attrib +s +h "`auxdir'\peb_`indic'.xlsx"
 			
@@ -200,12 +212,15 @@ qui {
 			* xlsx master file
 			
 			cap drop __00*
-			cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
-			*/  replace first(variable) sheet(peb_master)
 			
-			* Update master in PEs directory
-			cap export excel using "`auxdir'\peb_master.xlsx" , /* 
-			*/  replace first(variable) sheet(peb_master)
+			if ("`excel'" == "") {			
+				cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
+				*/  replace first(variable) sheet(peb_master)
+				
+				* Update master in PEs directory
+				cap export excel using "`auxdir'\peb_master.xlsx" , /* 
+				*/  replace first(variable) sheet(peb_master)
+			}
 			
 			shell attrib +s +h "`auxdir'\peb_master.xlsx"
 			
@@ -225,7 +240,16 @@ qui {
 	else {
 		noi disp in y "files /peb_`indic'.dta and /peb_master.dta not updated"
 	}
-}
+	
+	if ("`excel'" != "") {
+		
+		noi disp in y "You are not saving the Excel files. Make sure to use option " _n /* 
+	 */	"force next time you want to replace the current Excel files."
+		global peb_excel_use = 1
+		
+	}
+	
+} // end of qui
 
 
 end
