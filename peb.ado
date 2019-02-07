@@ -154,7 +154,11 @@ qui {
 			noi disp in red "Only one file can be loaded"
 			error
 		}
-		use "`outdir'\02.input/peb_`indic'.dta", clear
+		if ("`vcdate'" != "") {
+			noi peb_purge load,  outdir("`outdir'") ttldir("`ttldir'") /* 
+		*/  indics(`indic') datetime(`datetime') `update' auxdir(`auxdir')
+		}
+		else use "`outdir'\02.input/peb_`indic'.dta", clear
 		exit
 	}
 	
@@ -254,7 +258,7 @@ qui {
 		save `comparafile'
 		
 		* use "`indir'\indicators_`indic'_long.dta", clear
-		indicators `indic', load shape(long) `pause' vcdate(`vcdate')
+		noi indicators `indic', load shape(long) `pause' vcdate(`vcdate')
 		
 		* ---- Indicator-specific conditions
 		
