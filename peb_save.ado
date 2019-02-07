@@ -101,20 +101,19 @@ qui {
 				* Update WUP in PEs directory
 				cap export excel using "`auxdir'\peb_`indic'.xlsx" , /* 
 				*/  replace first(variable) sheet(peb_`indic')
-			}
-			
-			shell attrib +s +h "`auxdir'\peb_`indic'.xlsx"
-			
-			if (_rc) {
-				noi disp in red "Error updating /peb_`indic'.xlsx." _n /* 
-				*/   "Fix and then resubmit by clicking " _c /* 
-				*/   `"{stata export excel using "`outdir'\05.tools\peb_`indic'.xlsx" , replace first(variable) sheet(peb_`indic'):here}"' _n
-				error
-			}
-			else {
-				noi disp in y "file peb_`indic'.xlsx updated successfully"
-			}
-		}
+				shell attrib +s +h "`auxdir'\peb_`indic'.xlsx"
+				
+				if (_rc) {
+					noi disp in red "Error updating /peb_`indic'.xlsx." _n /* 
+					*/   "Fix and then resubmit by clicking " _c /* 
+					*/   `"{stata export excel using "`outdir'\05.tools\peb_`indic'.xlsx" , replace first(variable) sheet(peb_`indic'):here}"' _n
+					error
+				}
+				else {
+					noi disp in y "file peb_`indic'.xlsx updated successfully"
+				}
+			} // Save Excel file end			
+		} // update results data 
 		exit
 	}  // end of procedure for write up file
 	
@@ -163,7 +162,7 @@ qui {
 		
 	* If data has not changed but noexcel was executed before
 	if (`rcindic' == 0 & "`force'" == "" & "${peb_excel_use}" == "1") {
-		noi disp in r "Warning: " in y "You previously used option {it:noexcel}. " _n /* 
+		noi disp in r _n "Warning: " in y "You previously used option {it:noexcel}. " _n /* 
 	  */	 "You need to use option {it:force} to replace the current version of " _n /* 
 	  */	 "the excel files."
 	}
@@ -229,19 +228,19 @@ qui {
 				* Update master in PEs directory
 				cap export excel using "`auxdir'\peb_master.xlsx" , /* 
 				*/  replace first(variable) sheet(peb_master)
+
+				shell attrib +s +h "`auxdir'\peb_master.xlsx"				
+				if (_rc) {
+					noi disp in red "Error updating /peb_master.xlsx." _n /* 
+					*/   "Fix and then resubmit by clicking " _c /* 
+					*/   `"{stata export excel using "`outdir'\05.tools\peb_master.xlsx" , replace first(variable) sheet(peb_master):here}"' _n
+					error
+				}
+				else {
+					noi disp in y "file peb_master.xlsx updated successfully"
+				}
 			}
 			
-			shell attrib +s +h "`auxdir'\peb_master.xlsx"
-			
-			if (_rc) {
-				noi disp in red "Error updating /peb_master.xlsx." _n /* 
-				*/   "Fix and then resubmit by clicking " _c /* 
-				*/   `"{stata export excel using "`outdir'\05.tools\peb_master.xlsx" , replace first(variable) sheet(peb_master):here}"' _n
-				error
-			}
-			else {
-				noi disp in y "file peb_master.xlsx updated successfully"
-			}
 			
 		} // End of master file update
 		
@@ -252,8 +251,9 @@ qui {
 	
 	if ("`excel'" != "") {
 		
-		noi disp in y "You are not saving the Excel files. Make sure to use option " _n /* 
-	 */	"force next time you want to replace the current Excel files."
+		noi disp in r _n "Note:" in y "You are not saving the Excel files. " _c /* 
+   */ "Make sure to use option {it:force} next time you want to " _n /* 
+	 */  "replace the current Excel files."
 		global peb_excel_use = 1
 		
 	}
