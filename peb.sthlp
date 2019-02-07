@@ -27,8 +27,23 @@
 {it:options}] 
 
 {pstd}
-Where {it:indicator} refers to the shorthand of the file to be included in the PEB output.
+Where {help peb##indicators:indicators} refers to the set of calculations to be executed 
+or the results files to be loaded.
 
+{marker sections}{...}
+{title:sections}
+
+{pstd}
+Sections are presented under the following headings:
+
+		{it:{help peb##optable:Options at a glance}}
+		{it:{help peb##indicators:Set of indicators}}
+		{it:{help peb##exceptions:Exceptions files}}
+		{it:{help peb##options:Options}}
+		{it:{help peb##examples:Examples}}
+
+
+{marker optable}{...}
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
@@ -52,8 +67,10 @@ for debugging purposes. See {help pause}{p_end}
 {it:indicator}. For now, it only works for indicator {it:npl}{p_end}
 
 {syntab:Advanced}
-{synopt:{opt vc:date(string)}} Vintage control date of input file from pre-calculated 
-indicators. see {help indicators##vc_vars:indicators}{p_end}
+{synopt:{opt vc:date(string)}} Either [1] Vintage control date of input file 
+from pre-calculated indicators ({help indicators##load}) or [2] vintage control of 
+PEB output when used along with options {it:load} or {it:restore}. See 
+{help peb##vcdate:below}.{p_end}
 {synopt:{opt shpupdate}} update shared prosperity spell from Excel file provided by 
 Minh that has been completed by regional focal points. Only works within instruction 
 {it:shp}{p_end}
@@ -203,7 +220,8 @@ with PEB only, and placed in sheet 'merge' in the Excel tool.
 {dlgtab:Main}
 
 {phang}
-{opt load}  
+{opt load} Loads most recent version of {it:indicator} file. If the user wants to load 
+older versions, see option {it:vcdate()} {help peb##vcdate:below}.
 
 {phang}
 {opt noex:cel} Prevent {cmd:peb} from saving the excel file but it does save the dta 
@@ -271,8 +289,41 @@ that is accessible to poverty economist. Be default it uses the following rule:
 {err: Note:} It uses the same directory ({it:povecodir}) as the {it:ttldir()}
 
 {dlgtab:Advanced}
+{marker vcdate}{...}
 {phang}
-{opt vc:date(string)}  
+{opt vc:date(string)} refers to the vintage control of the input and output files. 
+let's see first the syntax of this option and then how to use it depending on  
+whether the vintage control refers to input of output files.  
+
+{phang2}
+{bf:{ul:Syntax of vcdate()}} You can select any vintage version of the data requested. There are 
+two variations of this option [1] {cmd:vcdate}(pick) or {cmd:vcdate}(choose), in which
+data displays all the versions available in the results window so that the user can click 
+on the version desired. [2] {cmd:vcdate}({it:date}) in {it:date} could be entered in two ways, 
+[2.1] %tcDDmonCCYY_HH:MM:SS date-time form such as '30jan2019 15:17:56' or [2.2] in 
+Stata internal form {help datetime##s2:SIF} like 1864480676000. Notice that, 
+{cmd:disp %13.0f clock("30jan2019 15:17:56", "DMYhms")} results in 1864480676000.
+
+{phang2}
+{bf:{ul:Input files}} By default, {cmd:peb} executes the set calculations and produces 
+at least two output files (e.g., peb_pov and peb_master). In this case, the {it:vcdate()} 
+option refers to input files created by the {help indicators} package. The user should 
+either know the specific date and time of the vintage version of the input files that 
+she wants to use or pick the vintage of the input file by using the variation 
+{it:vcdate(picl)} or {it:vcdate(choose)}. This option is useful for replicability purposes. 
+{err: Note}: Given that to display the vintages of the input files it is necessary to 
+execute the loading option of the {help indicators} command, the user should use the prefix 
+{help quitly:noi} to overwrite the prefix {it:qui} within the {cmd:peb} command. 
+For example, {cmd:noi peb pov, vcdate(pick)}
+
+{phang2}
+{bf:{ul:Output files}} When option {it:load} or {it:restore} is entered, {it:vcdate()} 
+refers to the vintage control of output files. This is so, because {it:load} or {it:restore} 
+does not execute calculations but rather loads data or restores vintages, respectively. In 
+this case, the user should either know the specific date and time of the vintage 
+version of the output file to load or restore or pick the vintage of the output file 
+by using the variation {it:vcdate(picl)} or {it:vcdate(choose)}. 
+This option is useful for comparability of versions or restore older versions. 
 
 
 {marker examples}{...}
@@ -301,12 +352,37 @@ the excel files by using option {it:force}.
 {p 10 10 2}{stata peb ine} // this does not do anything.{p_end}
 {p 10 10 2}{stata peb ine, force} // this replaces current excel files in memory{p_end}
 
-{dlgtab:Load data}
+{dlgtab:Load data (current version)}
 {pstd}
 Load poverty data and/or inequality data
 
 {p 10 10 2}{stata peb pov, load}{p_end}
 {p 10 10 2}{stata peb ine, load}{p_end}
+
+{dlgtab:vcdate() option}
+{pstd}
+Select vintage version of input poverty file to yield old results
+
+{p 10 10 2}.noi peb pov, vcdate(pick){p_end}
+
+{pstd}
+Select vintage version of output poverty file to be {ul:loaded}
+
+{p 10 10 2}.noi peb pov, vcdate(pick) {bf:load}{p_end}
+
+{pstd}
+Select vintage version of output poverty file to be {ul:restored}
+
+{p 10 10 2}.noi peb pov, vcdate(pick) {bf:restore}{p_end}
+
+{pstd}
+The same as before but using specific date and time.
+
+{p 10 10 2}.noi peb pov, vcdate(20dec2018 16:51:59) [{it:load|restore|(or nothing)}]{p_end}
+{pstd}
+{bf:Note:} the date and time in this example is random so you must use an actual date and 
+time. 
+
 
 
 {dlgtab:Purge data}
