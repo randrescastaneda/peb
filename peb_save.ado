@@ -31,11 +31,6 @@ qui {
 	if ("`force'" == "force") {
 		global peb_excel_use = 0
 	}
-	if ("${peb_excel_use}" == "1") {
-		noi disp in r "Warning: " in y "You previously used option {it:noexcel}. " _n /* 
-	 */	 "You need to use option {it:force} to replace the current version of " _n /* 
-	 */	 "the excel files."
-	}
 	
 	*-----------------------------------------------
 	* --------------- Procedure for write up file
@@ -81,6 +76,14 @@ qui {
 		cap noi datasignature confirm using /* 
 		*/ "`outdir'\02.input/_datasignature/peb_`indic'", strict
 		local rcindic  = _rc
+		
+		* If data has not changed but noexcel was executed before
+		if (`rcindic' == 0 & "`force'" == "" & "${peb_excel_use}" == "1") {
+			noi disp in r "Warning: " in y "You previously used option {it:noexcel}. " _n /* 
+		  */	 "You need to use option {it:force} to replace the current version of " _n /* 
+		  */	 "the excel files."
+		}
+		
 		if (`rcindic' != 0 | "`force'" != "") {
 			noi disp in y "detailed report of changes in peb_`indic'.dta"
 			noi datasignature report
@@ -157,7 +160,13 @@ qui {
 		noi disp in y "detailed report of changes in peb_`indic'.dta"
 		cap noi datasignature report
 	}
-	
+		
+	* If data has not changed but noexcel was executed before
+	if (`rcindic' == 0 & "`force'" == "" & "${peb_excel_use}" == "1") {
+		noi disp in r "Warning: " in y "You previously used option {it:noexcel}. " _n /* 
+	  */	 "You need to use option {it:force} to replace the current version of " _n /* 
+	  */	 "the excel files."
+	}
 	
 	if (`rcindic' | `rcmaster' | "`force'" != "") { // IF file does not exist or is different
 		
