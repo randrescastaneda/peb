@@ -94,7 +94,7 @@ qui {
 			save "`outdir'\02.input/peb_`indic'.dta", replace
 			noi disp in y "file /peb_`indic'.dta has been updated"
 			
-			if ("`excel'" == "") {
+			if ("`noexcel'" == "") {
 				cap export excel using "`outdir'\05.tools\peb_`indic'.xlsx" , /* 
 				*/  replace first(variable) sheet(peb_`indic')
 				
@@ -249,7 +249,7 @@ qui {
 		noi disp in y "files /peb_`indic'.dta and /peb_master.dta not updated"
 	}
 	
-	if ("`excel'" != "") {
+	if ("`noexcel'" != "") {
 		
 		noi disp in r _n "Note:" in y "You are not saving the Excel files. " _c /* 
    */ "Make sure to use option {it:force} next time you want to " _n /* 
