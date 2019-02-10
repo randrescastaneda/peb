@@ -359,7 +359,7 @@ qui {
 		
 		rename filename source 
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
-	 */	 `pause' auxdir("`auxdir'") `excel'
+	 */	 `pause' auxdir("`auxdir'") `noexcel'
 		
 	} // end of pov and ine
 	
@@ -457,7 +457,7 @@ qui {
 		* Save data
 		pause shp - before saving 
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
-	 */	 `pause' auxdir("`auxdir'") `excel'
+	 */	 `pause' auxdir("`auxdir'") `noexcel'
 		
 	}
 	
@@ -636,7 +636,7 @@ qui {
 		
 		pause npl - Right before saving
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
-	 */	 `pause' auxdir("`auxdir'") `excel'
+	 */	 `pause' auxdir("`auxdir'") `noexcel'
 		
 		
 	} // End of National POverty lines and Macro indicators. 
@@ -801,7 +801,7 @@ qui {
 		
 		pause key - right before saving 
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
-	 */	 `pause' auxdir("`auxdir'") `excel'
+	 */	 `pause' auxdir("`auxdir'") `noexcel'
 		
 	}
 	
@@ -893,7 +893,7 @@ qui {
 		
 		pause wup - before saving 
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
-	 */	 `pause' auxdir("`auxdir'") `excel'
+	 */	 `pause' auxdir("`auxdir'") `noexcel'
 	}
 	
 	
@@ -964,7 +964,7 @@ qui {
 		*/ update replace  
 		
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
-	 */	 `pause' auxdir("`auxdir'") `excel'
+	 */	 `pause' auxdir("`auxdir'") `noexcel'
 		
 	} // end of international poverty line to Local currency unit
 }
