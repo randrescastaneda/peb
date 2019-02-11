@@ -94,7 +94,7 @@ qui {
 			save "`outdir'\02.input/peb_`indic'.dta", replace
 			noi disp in y "file /peb_`indic'.dta has been updated"
 			
-			if ("`noexcel'" == "") {
+			if ("`excel'" == "") {
 				cap export excel using "`outdir'\05.tools\peb_`indic'.xlsx" , /* 
 				*/  replace first(variable) sheet(peb_`indic')
 				
@@ -230,7 +230,7 @@ qui {
 			
 			cap drop __00*
 			
-			if ("`noexcel'" == "") {			
+			if ("`excel'" == "") {			
 				cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
 				*/  replace first(variable) sheet(peb_master)
 				if (_rc) {
@@ -265,7 +265,7 @@ qui {
 		noi disp in y "files /peb_`indic'.dta and /peb_master.dta not updated"
 	}
 	
-	if ("`noexcel'" != "") {
+	if ("`excel'" != "") {
 		
 		noi disp in r _n "Note:" in y "You are not saving the Excel files. " _c /* 
    */ "Make sure to use option {it:force} next time you want to " _n /* 
@@ -281,7 +281,7 @@ qui {
 	append using `char_file' 
 	save, replace 
 	*** export to codeteam\peb_master.xlsx
-	if ("`noexcel'" == ""){
+	if ("`excel'" == ""){
 	cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
 				*/  sheetreplace first(variable) sheet(char_vintage)
 	if (_rc) {
@@ -306,7 +306,7 @@ qui {
 	merge 1:1 indic using `char_file', nogen update replace 
 	save, replace 
 	*** export to codeteam\peb_master.xlsx
-	if ("`noexcel'" == ""){
+	if ("`excel'" == ""){
 	cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
 				*/  sheetreplace first(variable) sheet(char_recent)
 	*** export to aux\peb_master.xlsx
