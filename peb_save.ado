@@ -274,7 +274,9 @@ qui {
 		
 	}
 	
-	** hostorical char (dta) 
+	***************************
+	** hostorical char (dta) **
+	***************************
 	use "`outdir'\02.input/char_track.dta", clear 
 	append using `char_file' 
 	save, replace 
@@ -292,27 +294,36 @@ qui {
 	*** export to aux\peb_master.xlsx
 	*** export excel using "`auxdir'\peb_master.xlsx" , /* 
 	***			*/  replace first(variable) sheet(char_vintage)				
-	}
-	else{
+		}
+		else{
 		noi disp in y "char_vintage is not exported to Excel"
 		}
 	
-	
-	** latest char (dta)
+	***********************
+	** latest char (dta) **
+	***********************
 	use "`outdir'\02.input/peb_char.dta", clear 
 	merge 1:1 indic using `char_file', nogen update replace 
 	save, replace 
 	*** export to codeteam\peb_master.xlsx
 	if ("`noexcel'" == ""){
-	export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
+	cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
 				*/  sheetreplace first(variable) sheet(char_recent)
 	*** export to aux\peb_master.xlsx
 	*** export excel using "`auxdir'\peb_master.xlsx" , /* 
-	***			*/  replace first(variable) sheet(char_recent)	
+	***			*/  replace first(variable) sheet(char_recent)
+		if (_rc) {
+			 noi disp in red "char_recent did not export to codeteam/peb_master.xlsx." _n
+			 error
+		     }
+			 else {
+			 noi disp in y "char_recent is updated in codeteam/peb_master.xlsx successfully"
+			 }
+	    }
 		else{
 		noi disp in y "char_recent is not exported to Excel"
 		}
-	}
+	
 } // end of qui
 
 
