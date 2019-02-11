@@ -238,7 +238,7 @@ qui {
 					error
 				    }
 			    else {
-					noi disp in y "file peb_master.xlsx updated successfully"
+					noi disp in y "file codeteam/peb_master.xlsx updated successfully"
 				}
 				
 				* Update master in PEs directory
@@ -279,31 +279,40 @@ qui {
 	append using `char_file' 
 	save, replace 
 	*** export to codeteam\peb_master.xlsx
+	if ("`noexcel'" == ""){
 	cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
 				*/  sheetreplace first(variable) sheet(char_vintage)
 	if (_rc) {
-			 noi disp in red "char did not export to codeteam/peb_master.xlsx." _n
+			 noi disp in red "char_vintage did not export to codeteam/peb_master.xlsx." _n
 			 error
 		     }
 			 else {
-			 noi disp in y "char is updated in codeteam/peb_master.xlsx successfully"
+			 noi disp in y "char_vintage is updated in codeteam/peb_master.xlsx successfully"
 			 }
 	*** export to aux\peb_master.xlsx
 	*** export excel using "`auxdir'\peb_master.xlsx" , /* 
 	***			*/  replace first(variable) sheet(char_vintage)				
-				
+	}
+	else{
+		noi disp in y "char_vintage is not exported to Excel"
+		}
+	
+	
 	** latest char (dta)
 	use "`outdir'\02.input/peb_char.dta", clear 
 	merge 1:1 indic using `char_file', nogen update replace 
 	save, replace 
 	*** export to codeteam\peb_master.xlsx
+	if ("`noexcel'" == ""){
 	export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
 				*/  sheetreplace first(variable) sheet(char_recent)
 	*** export to aux\peb_master.xlsx
 	*** export excel using "`auxdir'\peb_master.xlsx" , /* 
 	***			*/  replace first(variable) sheet(char_recent)	
-	
-	
+		else{
+		noi disp in y "char_recent is not exported to Excel"
+		}
+	}
 } // end of qui
 
 

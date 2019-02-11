@@ -29,7 +29,7 @@ load  shpupdate   force        ///
 GROUPdata   pause              ///
 COUNTry(passthru) povcalnet    ///
 purge  update restore          ///
-noEXcel          ///
+noexcel          ///
 ]
 
 
