@@ -20,12 +20,16 @@ syntax anything(name=indic id="indicator"), [ ///
 indir(string)                  ///
 outdir(string)                 ///
 ttldir(string)                 ///
+auxdir(string)                 ///
+meeting(string)                ///
+year(numlist)                  ///
 VCdate(string)                 ///
 trace(string)                  ///
 load  shpupdate   force        ///
 GROUPdata   pause              ///
 COUNTry(passthru) povcalnet    ///
 purge  update restore          ///
+noEXcel          ///
 ]
 
 
@@ -53,11 +57,63 @@ qui {
 	/*==================================================
 	Consistency Check
 	==================================================*/
-	* Directory Paths
-	if ("`indir'"  == "") local indir  "//wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
-	if ("`outdir'" == "") local outdir "\\wbgfscifs01\gtsd\03.projects_corp\01.PEB\01.PEB_SM19\01.PEB_SM19_QA"
-	if ("`ttldir'" == "") local ttldir "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB\SM2019\02.tool_output\01.PovEcon_input"
 	
+	* working month
+	local cmonth: disp %tdnn date("`c(current_date)'", "DMY")
+	
+	*Working year
+	if ("`year'" != "") {
+		
+		if !inlist(length("`year'"), 2, 4) {
+			noi disp in red "{it:year()} must be either two-digit (e.g., 19) or four-digit (e.g., 2019) long"
+			error
+		}
+		if length("`year'") == 4 {
+			if substr("`year'", 1, 2) != "20" {
+				noi disp in red "the first two digits of year must be 20"
+				error
+			}
+			local year = substr("`year'", 3, 2)
+		} // if year if 4-digit long
+	}
+	else local year:  disp %tdyy date("`c(current_date)'", "DMY")
+	
+	* Either Annual meeting (AM) or Spring meeting (SM)
+	if ("`meeting'" != "") {
+		if !inlist("`meeting'", "SM", "AM") {
+			noi disp in red "{it:meeting()} must be either SM or AM"
+			error
+		}
+	}
+	else {
+		if inrange(`cmonth', 1, 4) local meeting "SM"
+		else if inrange(`cmonth', 5, 10) local meeting "AM"
+		else {
+			noi disp in r "There is no default version for this month of the year." _n /* 
+		 */	"Go home. Get a life! (att: Pepe)"
+			error
+		}
+	}
+	
+	
+	* Directory Paths
+	local pebdir    "\\wbgfscifs01\gtsd\03.projects_corp\01.PEB"
+	local povecodir "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB/`meeting'20`year'"
+	
+	if ("`indir'"  == "") {
+		local indir  "//wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
+	}
+	if ("`outdir'" == "") {
+		local outdir "`pebdir'/01.PEB_`meeting'`year'\01.PEB_`meeting'`year'_QA"
+	}
+	if ("`ttldir'" == "") {
+		local ttldir "`povecodir'\02.tool_output\01.PovEcon_input"
+	}
+	if ("`auxdir'" == "") {
+		local auxdir "`povecodir'\01.tool\_aux"
+	}
+	
+	* Shared prosperity input directory
 	if regexm("`indir'", "(.*\\)([a-zA-Z0-9\.]+)$") /* 
   */	     local spdir = regexs(1)+"02.SharedProsperity"
 	
@@ -98,7 +154,11 @@ qui {
 			noi disp in red "Only one file can be loaded"
 			error
 		}
-		use "`outdir'\02.input/peb_`indic'.dta", clear
+		if ("`vcdate'" != "") {
+			noi peb_purge load,  outdir("`outdir'") ttldir("`ttldir'") /* 
+		*/  indics(`indic') datetime(`datetime') `update' auxdir(`auxdir')
+		}
+		else use "`outdir'\02.input/peb_`indic'.dta", clear
 		exit
 	}
 	
@@ -108,7 +168,7 @@ qui {
 	
 	if ("`purge'" == "purge") {
 		noi peb_purge purge, `country' outdir("`outdir'") ttldir("`ttldir'") /* 
-		*/  indics(`indic') datetime(`datetime') `update'
+		*/  indics(`indic') datetime(`datetime') `update' auxdir(`auxdir')
 		exit 
 	}
 	
@@ -118,8 +178,8 @@ qui {
 
 	if ("`restore'" == "restore") {
 		noi peb_purge restore, outdir("`outdir'") ttldir("`ttldir'") /* 
-		*/  indics(`indic') datetime(`datetime')
-		exit 
+		*/  indics(`indic') datetime(`datetime') auxdir(`auxdir')
+		exit  
 	}
 	
 	
@@ -183,7 +243,7 @@ qui {
 	==================================================*/
 	if ("`groupdata'" != "") {
 		peb_groupdata `indic', outdir("`outdir'") ttldir("`ttldir'") /* 
-		*/  indir("`indir'")  `pause'
+		*/  indir("`indir'")  `pause' 
 		exit 
 	}
 	 
@@ -198,7 +258,7 @@ qui {
 		save `comparafile'
 		
 		* use "`indir'\indicators_`indic'_long.dta", clear
-		indicators `indic', load shape(long) `pause'
+		noi indicators `indic', load shape(long) `pause' vcdate(`vcdate')
 		
 		* ---- Indicator-specific conditions
 		
@@ -295,10 +355,11 @@ qui {
 		*----------Save file
 		if (regexm("`trace'", "E|Ex")) set trace on
 		peb_exception apply, outdir("`outdir'") `pause' indic(`indic')  // exceptions
-		set trace off
+		if (regexm("`trace'", "E|Ex"))  set trace off
 		
 		rename filename source 
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' `pause'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
+	 */	 `pause' auxdir("`auxdir'") `excel'
 		
 	} // end of pov and ine
 	
@@ -395,7 +456,8 @@ qui {
 		
 		* Save data
 		pause shp - before saving 
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' `pause'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
+	 */	 `pause' auxdir("`auxdir'") `excel'
 		
 	}
 	
@@ -494,7 +556,7 @@ qui {
 		
 		*-------------------- Data from WDI
 		* use "`indir'\indicators_wdi_long.dta", clear
-		indicators wdi, load shape(long) `pause'
+		indicators wdi, load shape(long) `pause' vcdate(`vcdate')
 		* keep if inlist(case, "si_pov_nahc","sp_pop_totl", "ny_gdp_pcap_pp_kd","ny_gnp_pcap_kd")
 		keep if inlist(case, "sp_pop_totl","ny_gdp_pcap_pp_kd","ny_gnp_pcap_kd")
 		
@@ -573,7 +635,8 @@ qui {
 		*/   date time  datetime case values comparable
 		
 		pause npl - Right before saving
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' `pause'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
+	 */	 `pause' auxdir("`auxdir'") `excel'
 		
 		
 	} // End of National POverty lines and Macro indicators. 
@@ -638,7 +701,7 @@ qui {
 		
 		* Load indicators file
 		* use "`indir'\indicators_`indic'_wide.dta", clear
-		indicators key, load shape(wide) `pause'
+		indicators key, load shape(wide) `pause' vcdate(`vcdate')
 		
 		bysort countrycode: egen haseusilc = total(regexm(filename, "EU\-"))
 		drop if (!regexm(filename, "EU\-") & haseusilc != 0 & region == "ECA") 
@@ -737,7 +800,8 @@ qui {
 		
 		
 		pause key - right before saving 
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'  `pause'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
+	 */	 `pause' auxdir("`auxdir'") `excel'
 		
 	}
 	
@@ -828,7 +892,8 @@ qui {
 		keep `keepvars'
 		
 		pause wup - before saving 
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force'  `pause'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
+	 */	 `pause' auxdir("`auxdir'") `excel'
 	}
 	
 	
@@ -898,7 +963,8 @@ qui {
 		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
 		*/ update replace  
 		
-		noi peb_save `indic', datetime(`datetime') outdir("`outdir'")	 `force'  `pause'
+		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
+	 */	 `pause' auxdir("`auxdir'") `excel'
 		
 	} // end of international poverty line to Local currency unit
 }
@@ -1000,7 +1066,7 @@ peb_exception load, outdir("`outdir'") ttldir("`ttldir'") /*
 Shared Prosperity using data from indicators.ado
 ==================================================*/
 * use "`indir'\indicators_`indic'_long.dta", clear
-indicators `indic', load shape(long) `pause'
+indicators `indic', load shape(long) `pause' vcdate(`vcdate')
 
 destring year, force replace // convert to values
 noi peb_vcontrol, `maxdate' vcdate(`vcdate')

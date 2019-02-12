@@ -27,7 +27,8 @@ pause                          ///
 
 if ("`pause'" != "") pause on 
 else                 pause off
-local indir "\\wbgfscifs01\gtsd\03.projects_corp\01.PEB\01.PEB_AM18\01.PEB_AM18_QA\_aux"
+
+local auxdir "`outdir'\_aux"
 
 local infile "PEB_templateGroupData.xlsm"
 
@@ -39,7 +40,7 @@ Load data from template
 *---------- Select version and load
 /* 
 if ("`tver'" == "" ) {
-	local allvers: dir "`indir'" files "PEB_template@*.xlsm"
+	local allvers: dir "`auxdir'" files "PEB_template@*.xlsm"
 	mata {
 		Vs = tokens(st_local("allvers"))
 		Vs = regexr(regexr(Vs, "peb_template@", ""), "\.xlsm", "")
@@ -62,7 +63,7 @@ if ("`indic'" == "plc") {
 	
 	local sheet Overview_all
 	
-	import excel using "`indir'/`infile'", sheet("`sheet'") /* 
+	import excel using "`auxdir'/`infile'", sheet("`sheet'") /* 
 	*/ firstrow case(lower) clear
 	
 	missings dropobs, force
@@ -107,7 +108,7 @@ Poverty
 if ("`indic'" == "pov") {
 	local sheet Poverty_all
 	
-	import excel using "`indir'/`infile'", sheet("`sheet'") /* 
+	import excel using "`auxdir'/`infile'", sheet("`sheet'") /* 
 	*/ firstrow case(lower) clear
 	
 	missings dropobs, force
@@ -155,7 +156,7 @@ Inequality
 if ("`indic'" == "ine") {
 	local sheet Inequality_all
 	
-	import excel using "`indir'/`infile'", sheet("`sheet'") /* 
+	import excel using "`auxdir'/`infile'", sheet("`sheet'") /* 
 	*/ firstrow case(lower) clear
 	
 	missings dropobs, force
@@ -209,7 +210,7 @@ Shared Prosperity
 if ("`indic'" == "shp") {
 	local sheet Shared_Prosperity_all
 	
-	import excel using "`indir'/`infile'", sheet("`sheet'") /* 
+	import excel using "`auxdir'/`infile'", sheet("`sheet'") /* 
 	*/ firstrow case(lower) clear
 	
 	missings dropobs, force
@@ -257,7 +258,7 @@ if ("`indic'" == "key") {
 	
 	local sheet Key_indicators_all
 	
-	import excel using "`indir'/`infile'", sheet("`sheet'") /* 
+	import excel using "`auxdir'/`infile'", sheet("`sheet'") /* 
 	*/ firstrow case(lower) clear
 	
 	missings dropobs, force
