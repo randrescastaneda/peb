@@ -225,10 +225,10 @@ qui {
 			* Char file  
 			tempname post_handle 
             tempfile char_file 
-            local post_varlist str5(indic) str20(date_time) str8(user) 
+            local post_varlist str5(indic) str20(date_time) str8(user) str40(datasignature)
 			postutil clear 
 			postfile `post_handle' `post_varlist' using `char_file', replace 
-			post `post_handle' ("`_dta[`indic'_calcset]'") ("`_dta[`indic'_datetimeHRF]'") ("`_dta[`indic'_user]'") 
+			post `post_handle' ("`_dta[`indic'_calcset]'") ("`_dta[`indic'_datetimeHRF]'") ("`_dta[`indic'_user]'") ( "`_dta[`indic'_datasignature_si]'") 
 			postclose `post_handle' 
 
 			
