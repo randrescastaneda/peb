@@ -238,7 +238,7 @@ qui {
 			datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_master", replace)
 			save "`outdir'\02.input/_vintage/peb_master_`datetime'.dta" 
 			save "`outdir'\02.input/peb_master.dta", replace
-			noi disp in y "file /peb_master.dta has been updated"
+			noi disp in y "file peb_master.dta has been updated"
 			
 			* xlsx master file
 			
@@ -268,7 +268,7 @@ qui {
 					error
 				}
 				else {
-				noi disp in y "file peb_master.xlsx updated successfully"
+				noi disp in y "file aux/peb_master.xlsx updated successfully"
 				}
 			}
 			
@@ -354,9 +354,9 @@ qui {
 		else{
 		noi disp in y "char_recent is updated in aux/peb_master.xlsx successfully"
 		}
-		else{
+	}
+	else{
 		noi disp in y "You are not saving char_recent to Excel"
-		}
 	}
 } // end of qui
 
