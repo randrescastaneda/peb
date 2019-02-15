@@ -89,16 +89,17 @@ qui {
 			noi datasignature report
 			
 			datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'_`datetime'")
-			datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'", replace)
+			datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'", replace)		
 			save "`outdir'\02.input/_vintage/peb_`indic'_`datetime'.dta" 
 			save "`outdir'\02.input/peb_`indic'.dta", replace
 			noi disp in y "file /peb_`indic'.dta has been updated"
 			
 			if ("`excel'" == "") {
+				* Update in codeteam directory
 				cap export excel using "`outdir'\05.tools\peb_`indic'.xlsx" , /* 
 				*/  replace first(variable) sheet(peb_`indic')
 				
-				* Update WUP in PEs directory
+				* Update in PEs directory
 				cap export excel using "`auxdir'\peb_`indic'.xlsx" , /* 
 				*/  replace first(variable) sheet(peb_`indic')
 				shell attrib +s +h "`auxdir'\peb_`indic'.xlsx"
@@ -169,9 +170,21 @@ qui {
 	
 	if (`rcindic' | `rcmaster' | "`force'" != "") { // IF file does not exist or is different
 	
-		
 		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'_`datetime'")
 		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'", replace)
+		
+					
+		*** generate char for shp file ***
+		if ("`indic'"=="shp"){
+		local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
+		local datetimeHRF = trim("`datetimeHRF'")
+		local user=c(username)
+		char _dta[`indic'_datetimeHRF]    "`datetimeHRF'"
+		char _dta[`indic'_calcset]        "`indic'"
+		char _dta[`indic'_user]           "`user'"
+		char _dta[`indic'_datasignature_si] "`_dta[datasignature_si]'"
+		}		
+		
 		save "`outdir'\02.input/_vintage/peb_`indic'_`datetime'.dta" 
 		save "`outdir'\02.input/peb_`indic'.dta", replace
 		noi disp in y "file /peb_`indic'.dta has been updated"
@@ -212,11 +225,12 @@ qui {
 			* Char file  
 			tempname post_handle 
             tempfile char_file 
-            local post_varlist str5(indic) str20(date_time) str8(user) str40(datasignature) 
-            postutil clear 
-            postfile `post_handle' `post_varlist' using `char_file', replace 
-            post `post_handle' ("`_dta[`indic'_calcset]'") ("`_dta[`indic'_datetimeHRF]'") ("`_dta[`indic'_user]'") ("`_dta[`indic'_datasignature_si]'") 
-            postclose `post_handle' 
+            local post_varlist str5(indic) str20(date_time) str8(user) 
+			postutil clear 
+			postfile `post_handle' `post_varlist' using `char_file', replace 
+			post `post_handle' ("`_dta[`indic'_calcset]'") ("`_dta[`indic'_datetimeHRF]'") ("`_dta[`indic'_user]'") 
+			postclose `post_handle' 
+
 			
 			* DTA file
 			sort indicator countrycode source year case
@@ -230,7 +244,8 @@ qui {
 			
 			cap drop __00*
 			
-			if ("`excel'" == "") {			
+			if ("`excel'" == "") {
+				* Update master in codeteam directory
 				cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
 				*/  replace first(variable) sheet(peb_master)
 				if (_rc) {
@@ -242,19 +257,19 @@ qui {
 				}
 				
 				* Update master in PEs directory
-			***	cap export excel using "`auxdir'\peb_master.xlsx" , /* 
-			***	*/  replace first(variable) sheet(peb_master)
+				cap export excel using "`auxdir'\peb_master.xlsx" , /* 
+				*/  replace first(variable) sheet(peb_master)
 
-			***	shell attrib +s +h "`auxdir'\peb_master.xlsx"				
-			***	if (_rc) {
-			***		noi disp in red "Error updating /peb_master.xlsx." _n /* 
-			***		*/   "Fix and then resubmit by clicking " _c /* 
-			***		*/   `"{stata export excel using "`outdir'\05.tools\peb_master.xlsx" , replace first(variable) sheet(peb_master):here}"' _n
-			***		error
-			***	}
-			***	else {
-			***		noi disp in y "file peb_master.xlsx updated successfully"
-			***	}
+				shell attrib +s +h "`auxdir'\peb_master.xlsx"				
+				if (_rc) {
+					noi disp in red "Error updating _aux/peb_master.xlsx." _n /* 
+					*/   "Fix and then resubmit by clicking " _c /* 
+					*/   `"{stata export excel using "`outdir'\05.tools\peb_master.xlsx" , replace first(variable) sheet(peb_master):here}"' _n
+					error
+				}
+				else {
+				noi disp in y "file peb_master.xlsx updated successfully"
+				}
 			}
 			
 			
@@ -274,56 +289,75 @@ qui {
 		
 	}
 	
-	***************************
-	** hostorical char (dta) **
-	***************************
+	**********************
+	** hostorical char  **
+	**********************
 	use "`outdir'\02.input/char_track.dta", clear 
 	append using `char_file' 
-	save, replace 
-	*** export to codeteam\peb_master.xlsx
+	save, replace
+	
+	*** export to excel ***
 	if ("`excel'" == ""){
+	*** export to codeteam\peb_master.xlsx
 	cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
 				*/  sheetreplace first(variable) sheet(char_vintage)
 	if (_rc) {
-			 noi disp in red "char_vintage did not export to codeteam/peb_master.xlsx." _n
-			 error
-		     }
-			 else {
-			 noi disp in y "char_vintage is updated in codeteam/peb_master.xlsx successfully"
-			 }
+		noi disp in red "char_vintage did not export to codeteam/peb_master.xlsx." _n
+		error
+		}
+		else {
+		noi disp in y "char_vintage is updated in codeteam/peb_master.xlsx successfully"
+		}
+			 
 	*** export to aux\peb_master.xlsx
-	*** export excel using "`auxdir'\peb_master.xlsx" , /* 
-	***			*/  replace first(variable) sheet(char_vintage)				
+	cap export excel using "`auxdir'\peb_master.xlsx" , /* 
+		*/  sheetreplace first(variable) sheet(char_vintage)
+	if (_rc) {
+		noi disp in red "char_vintage did not export to aux/peb_master.xlsx." _n
+		error
 		}
-		else{
-		noi disp in y "char_vintage is not exported to Excel"
+		else {
+		noi disp in y "char_vintage is updated in aux/peb_master.xlsx successfully"
 		}
+	}
+	else{
+		noi disp in y "You are not saving char_vintage to Excel"
+	}
 	
-	***********************
-	** latest char (dta) **
-	***********************
+	*****************
+	** latest char **
+	*****************
 	use "`outdir'\02.input/peb_char.dta", clear 
 	merge 1:1 indic using `char_file', nogen update replace 
-	save, replace 
-	*** export to codeteam\peb_master.xlsx
+	save, replace
+	
+	*** export to excel ***
 	if ("`excel'" == ""){
+	*** export to codeteam\peb_master.xlsx
 	cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
 				*/  sheetreplace first(variable) sheet(char_recent)
-	*** export to aux\peb_master.xlsx
-	*** export excel using "`auxdir'\peb_master.xlsx" , /* 
-	***			*/  replace first(variable) sheet(char_recent)
-		if (_rc) {
-			 noi disp in red "char_recent did not export to codeteam/peb_master.xlsx." _n
-			 error
-		     }
-			 else {
-			 noi disp in y "char_recent is updated in codeteam/peb_master.xlsx successfully"
-			 }
-	    }
+	if (_rc) {
+		noi disp in red "char_recent did not export to codeteam/peb_master.xlsx." _n
+		error
+		}
 		else{
-		noi disp in y "char_recent is not exported to Excel"
+		noi disp in y "char_recent is updated in codeteam/peb_master.xlsx successfully"
 		}
 	
+	*** export to aux\peb_master.xlsx
+	cap export excel using "`auxdir'\peb_master.xlsx" , /* 
+				*/  sheetreplace first(variable) sheet(char_recent)
+	if (_rc) {
+		noi disp in red "char_recent did not export to aux/peb_master.xlsx." _n
+		error
+		}
+		else{
+		noi disp in y "char_recent is updated in aux/peb_master.xlsx successfully"
+		}
+		else{
+		noi disp in y "You are not saving char_recent to Excel"
+		}
+	}
 } // end of qui
 
 
