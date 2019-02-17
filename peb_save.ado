@@ -275,23 +275,10 @@ qui {
 			
 		} // End of master file update
 		
-	} // end of indicator file update 
-	else {
-		noi disp in y "files /peb_`indic'.dta and /peb_master.dta not updated"
-	}
-	
-	if ("`excel'" != "") {
-		
-		noi disp in r _n "Note:" in y "You are not saving the Excel files. " _c /* 
-   */ "Make sure to use option {it:force} next time you want to " _n /* 
-	 */  "replace the current Excel files."
-		global peb_excel_use = 1
-		
-	}
-	
-	**********************
+    **********************
 	** hostorical char  **
 	**********************
+
 	use "`outdir'\02.input/char_track.dta", clear 
 	append using `char_file' 
 	save, replace
@@ -357,7 +344,23 @@ qui {
 	}
 	else{
 		noi disp in y "You are not saving char_recent to Excel"
+		}	
+		
+		
+	} // end of indicator file update 
+	else {
+		noi disp in y "files /peb_`indic'.dta and /peb_master.dta not updated"
 	}
+	
+	if ("`excel'" != "") {
+		
+		noi disp in r _n "Note:" in y "You are not saving the Excel files. " _c /* 
+   */ "Make sure to use option {it:force} next time you want to " _n /* 
+	 */  "replace the current Excel files."
+		global peb_excel_use = 1
+		
+	}
+	
 } // end of qui
 
 
