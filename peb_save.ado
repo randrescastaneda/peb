@@ -222,15 +222,21 @@ qui {
 		
 		if (`rcmastsign' | `rcmaster' | "`force'" != "") {  // IF file is different or does not exist
 			
+		
 			* Char file  
 			tempname post_handle 
             tempfile char_file 
-            local post_varlist str5(indic) str20(date_time) str8(user) str40(datasignature)
+            local post_varlist str6(indic) str20(date_time) str8(user) str40(datasignature)
 			postutil clear 
-			postfile `post_handle' `post_varlist' using `char_file', replace 
-			post `post_handle' ("`_dta[`indic'_calcset]'") ("`_dta[`indic'_datetimeHRF]'") ("`_dta[`indic'_user]'") ( "`_dta[`indic'_datasignature_si]'") 
-			postclose `post_handle' 
-
+			postfile `post_handle' `post_varlist' using `char_file', replace
+			if ("${groupdata}"!="1") {
+			post `post_handle' ("`_dta[`indic'_calcset]'") ("`_dta[`indic'_datetimeHRF]'") ("`_dta[`indic'_user]'") ( "`_dta[`indic'_datasignature_si]'")  
+			}
+			else{
+			post `post_handle' ("`_dta[`indic'_GD_calcset]'") ("`_dta[`indic'_GD_datetimeHRF]'") ("`_dta[`indic'_GD_user]'") ( "`_dta[`indic'_GD_datasignature_si]'")  
+			}
+			postclose `post_handle'
+			macro drop groupdata
 			
 			* DTA file
 			sort indicator countrycode source year case
