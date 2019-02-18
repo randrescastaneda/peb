@@ -336,17 +336,41 @@ if ("`indic'" == "key") {
 	
 	* keep if regexm(case,"B|T|190")
 }
+/*==================================================
+Add characteristics
+==================================================*/
+* datetime
+local date = date("`c(current_date)'", "DMY")  // %tdDDmonCCYY
+local time = clock("`c(current_time)'", "hms") // %tcHH:MM:SS
+loca datetime = `date'*24*60*60*1000 + `time'  // %tcDDmonCCYY_HH:MM:SS
 
+*cap noi datasignature confirm using /* 
+*	*/ "`outdir'\02.input/_datasignature/peb_`indic'_GD", strict
+*if (_rc) {	
+*datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'_GD_`datetime'")
+*datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'_GD", replace)
+datasignature set, reset
 
+local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
+local datetimeHRF = trim("`datetimeHRF'")
+local user=c(username)
+char _dta[`indic'_GD_datetimeHRF]    "`datetimeHRF'"
+char _dta[`indic'_GD_calcset]        "`indic'_GD"
+char _dta[`indic'_GD_user]           "`user'"
+char _dta[`indic'_GD_datasignature_si] "`_dta[datasignature_si]'"
 
 /*==================================================
 Save and execute general calculations
 ==================================================*/
 save "`outdir'\02.input/peb_`indic'_GD.dta", replace
-noi peb `indic'
-
-
-
+*save "`outdir'\02.input/_vintage/peb_`indic'_`datetime'.dta"
+noi disp in y "file /peb_`indic'_GD.dta has been updated" _n
+*}
+*else{
+* noi disp in y "The groupdata is not updated" _n
+*}
+global groupdata = 1
+noi peb `indic',force
 end
 
 *-------------------- Generate time variables

@@ -378,16 +378,19 @@ qui {
 		* local spdir \\wbgfscifs01\GTSD\02.core_team\02.data\02.SharedProsperity
 		local shpfilename "`spdir'/GDSP circa 2010-2015_forPEB_AM2018.xlsx"
 		pause shp - load GDSP circa 2010-2015
-		dirlist "`shpfilename'"
-		local ftimes = "`r(ftimes)'"
-		local fdates = "`r(fdates)'"
+		*!!! 2/15/2019 dirlist is not working, need to be fixed 
+		*!!! dirlist "`shpfilename'"
+		*!!! local ftimes = "`r(ftimes)'"
+		*!!! local fdates = "`r(fdates)'"
+		local fdates: display %tdNN/DD/CCYY date(c(current_date), "DMY")
+		local ftimes: display %tcHh:MM-AM clock(c(current_time),"hms")
 		
 		import excel using "`shpfilename'", describe
 		local shtname1  = "`r(worksheet_1)'" 
-    local shtname2  = "`r(worksheet_2)'" 
+		local shtname2  = "`r(worksheet_2)'" 
     
 		local shtrange1 = "`r(range_1)'" 
-    local shtrange2 = "`r(range_2)'" 
+		local shtrange2 = "`r(range_2)'" 
 		
 		local shtrange1: subinstr local shtrange1 "A1" "A6", all
 		local shtrange2: subinstr local shtrange2 "A1" "A6", all
