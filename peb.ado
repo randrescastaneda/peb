@@ -382,8 +382,48 @@ qui {
 		*!!! dirlist "`shpfilename'"
 		*!!! local ftimes = "`r(ftimes)'"
 		*!!! local fdates = "`r(fdates)'"
-		local fdates: display %tdNN/DD/CCYY date(c(current_date), "DMY")
-		local ftimes: display %tcHh:MM-AM clock(c(current_time),"hms")
+		*local fdates: display %tdNN/DD/CCYY date(c(current_date), "DMY")
+		*local ftimes: display %tcHh:MM-AM clock(c(current_time),"hms")
+		
+		tempfile dirlist
+		local shellcmd `"dir "`shpfilename'">`dirlist'"'
+		quietly shell `shellcmd'
+
+		tempname fh
+		
+		file open `fh' using "`dirlist'", text read
+		file read `fh' line
+	
+		local nfiles = 0
+	
+		while r(eof)==0  {
+	
+		if `"`line'"' ~= "" & substr(`"`line'"',1,1) ~= " " {
+
+			if "`c(os)'" == "Windows" {
+			
+				local fdate : word 1 of `line'
+				local ftime : word 2 of `line'
+				local word3 : word 3 of `line'
+				
+				if upper("`word3'")=="AM" | upper("`word3'")=="PM" {
+					local ftime "`ftime'-`word3'"
+					local fsize : word 4 of `line'
+					local fname : word 5 of `line'
+					}
+				else {
+					local fsize : word 3 of `line'
+					local fname : word 4 of `line'
+					}							
+				}
+				local fdates "`fdates' `fdate'"
+				local ftimes "`ftimes' `ftime'"
+				local nfiles = `nfiles' + 1
+			}
+			file read `fh' line	
+		}
+		file close `fh'
+		
 		
 		import excel using "`shpfilename'", describe
 		local shtname1  = "`r(worksheet_1)'" 
