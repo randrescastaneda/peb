@@ -29,7 +29,8 @@ load  shpupdate   force        ///
 GROUPdata   pause              ///
 COUNTry(passthru) povcalnet    ///
 purge  update restore          ///
-noEXcel          ///
+noEXcel                        ///
+cpivin(numlist)                ///
 ]
 
 
@@ -95,6 +96,12 @@ qui {
 		}
 	}
 	
+	
+	* CPI vintage
+	if ("`cpivin'" != "" & "`indic'" != "plc") {
+		noi dis in r "Option {it:cpivin} only works with set of calculations {it:plc}"
+		error
+	}
 	
 	* Directory Paths
 	local pebdir    "\\wbgfscifs01\gtsd\03.projects_corp\01.PEB"
@@ -907,16 +914,18 @@ qui {
 	*--------------------
 	if ("`indic'" == "plc") {  // Poverty line in Local Currency unite
 		
-		local cpipath "c:\ado\personal\Datalibweb\data\GMD\SUPPORT\SUPPORT_2005_CPI"
-		local cpidirs: dir "`cpipath'" dirs "*CPI_*_M"
+		if ("`cpivin'" == "") {
+			local cpipath "c:\ado\personal\Datalibweb\data\GMD\SUPPORT\SUPPORT_2005_CPI"
+			local cpidirs: dir "`cpipath'" dirs "*CPI_*_M"
+			
+			local cpivins "0"
+			foreach cpidir of local cpidirs {
+				if regexm("`cpidir'", "cpi_v([0-9]+)_m") local cpivin = regexs(1)
+				local cpivins "`cpivins', `cpivin'"
+			}
+			local cpivin = max(`cpivins')
+		} // if no cpi vintage is selected
 		
-		local cpivins "0"
-		foreach cpidir of local cpidirs {
-			if regexm("`cpidir'", "cpi_v([0-9]+)_m") local cpivin = regexs(1)
-			local cpivins "`cpivins', `cpivin'"
-		}
-		
-		local cpivin = max(`cpivins')
 		qui datalibweb, country(Support) year(2005) type(GMDRAW) fileserver /* 
 		*/	surveyid(Support_2005_CPI_v0`cpivin'_M) filename(Final_CPI_PPP_to_be_used.dta) 
 		
