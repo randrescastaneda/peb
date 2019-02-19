@@ -58,7 +58,7 @@ local countries_: subinstr local countries " " "|", all
 /*==================================================
 Pov line in LCU
 ==================================================*/
-
+qui{
 if ("`indic'" == "plc") {
 	
 	local sheet Overview_all
@@ -358,7 +358,7 @@ char _dta[`indic'_GD_datetimeHRF]    "`datetimeHRF'"
 char _dta[`indic'_GD_calcset]        "`indic'_GD"
 char _dta[`indic'_GD_user]           "`user'"
 char _dta[`indic'_GD_datasignature_si] "`_dta[datasignature_si]'"
-
+}
 /*==================================================
 Save and execute general calculations
 ==================================================*/
@@ -370,7 +370,7 @@ noi disp in y "file /peb_`indic'_GD.dta has been updated" _n
 * noi disp in y "The groupdata is not updated" _n
 *}
 global groupdata = 1
-noi peb `indic',force
+noi peb `indic'
 end
 
 *-------------------- Generate time variables

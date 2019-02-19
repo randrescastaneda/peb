@@ -242,7 +242,7 @@ qui {
 	Group data
 	==================================================*/
 	if ("`groupdata'" != "") {
-		peb_groupdata `indic', outdir("`outdir'") ttldir("`ttldir'") /* 
+		noi peb_groupdata `indic', outdir("`outdir'") ttldir("`ttldir'") /* 
 		*/  indir("`indir'")  `pause' 
 		exit 
 	}
