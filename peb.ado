@@ -907,8 +907,18 @@ qui {
 	*--------------------
 	if ("`indic'" == "plc") {  // Poverty line in Local Currency unite
 		
+		local cpipath "c:\ado\personal\Datalibweb\data\GMD\SUPPORT\SUPPORT_2005_CPI"
+		local cpidirs: dir "`cpipath'" dirs "*CPI_*_M"
+		
+		local cpivins "0"
+		foreach cpidir of local cpidirs {
+			if regexm("`cpidir'", "cpi_v([0-9]+)_m") local cpivin = regexs(1)
+			local cpivins "`cpivins', `cpivin'"
+		}
+		
+		local cpivin = max(`cpivins')
 		qui datalibweb, country(Support) year(2005) type(GMDRAW) fileserver /* 
-		*/	surveyid(Support_2005_CPI_v02_M) filename(Final_CPI_PPP_to_be_used.dta) 
+		*/	surveyid(Support_2005_CPI_v0`cpivin'_M) filename(Final_CPI_PPP_to_be_used.dta) 
 		
 		local date: char _dta[note1]
 		local date: subinstr local date "updated in" "", all
