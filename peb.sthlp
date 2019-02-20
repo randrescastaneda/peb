@@ -97,6 +97,9 @@ or a two-digit number (e.g., 19).{p_end}
 {synopt:{opt auxdir(string)}}Directory to save peb_master.xlsx and  
 peb_wup.xlsx files that is accessible to poverty economist. See 
 {help peb##auxdir:below}{p_end}
+{synopt:{opt cpivin(numlist)}}Vintage version of CPI data. Do not include "v" or leading 
+zeros (e.g., 02). Just include the version number (e.g., 2). Default is the most recent 
+one.{p_end}
 {synoptline}
 {p2colreset}{...}
 {p 4 6 2}
