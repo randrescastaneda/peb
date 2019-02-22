@@ -34,7 +34,6 @@ cpivin(numlist)                ///
 ]
 
 
-drop _all
 gtsd check peb
 if ("`pause'" == "pause") pause on
 else                      pause off
@@ -43,16 +42,18 @@ else                      pause off
 qui {
 	
 	*------------------ SSC commands  ------------------
-	local sscados "dirlist unique missings"
-	foreach ado of local sscados {
-		cap which `ado'
-		if (_rc) ssc install `ado'
-		local adoupdate "`adoupdate' `ado'"
-	}
-	
-	if ("`adoupdate'" != "") 	{
-		adoupdate `adoupdate', ssconly 		
-		if ("`r(pkglist)'" != "") adoupdate `r(pkglist)', update
+	if !inlist("`indic'", "info") {
+		local sscados "dirlist unique missings"
+		foreach ado of local sscados {
+			cap which `ado'
+			if (_rc) ssc install `ado'
+			local adoupdate "`adoupdate' `ado'"
+		}
+		
+		if ("`adoupdate'" != "") 	{
+			adoupdate `adoupdate', ssconly 		
+			if ("`r(pkglist)'" != "") adoupdate `r(pkglist)', update
+		}
 	}
 	
 	/*==================================================
@@ -155,9 +156,9 @@ qui {
 	}
 	
 	* info 
-	
 	if ("`indic'" == "info") exit
 	
+	drop _all
 /* ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
    ------------------------------------------------------------------------------
                             Auxiliary Options
