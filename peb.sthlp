@@ -22,13 +22,15 @@
 {title:Syntax}
 {p 8 17 2}
 {cmdab:peb}
-{it:indicator}
+{it:indicator}|{it:instruction}
 [{cmd:,}
 {it:options}] 
 
 {pstd}
-Where {help peb##indicators:indicators} refers to the set of calculations to be executed 
-or the results files to be loaded.
+Where {help peb##indicators:indicators|instruction} refers to the set of calculations
+ to be executed or the results files to be loaded, or to a particular 
+ instruction to {cmdpeb} that does not perform any particular calculation or modification
+ in the final results.
 
 {marker sections}{...}
 {title:sections}
@@ -120,7 +122,7 @@ For a better understanding of the PEB process, please refer to the this
 {browse "\\wbgfscifs01\gtsd\03.projects_corp\01.PEB\01.PEB_AM18\01.PEB_AM18_QA\_aux\PEBTechnicalWorkflow.pdf":flowchart}.
 
 {marker indicators}{...}
-{title:Indicators}
+{title:Indicators|instruction}
 {pstd}
 {it:indicator} is a shorthand for a set of common calculations that should be included 
 in the PEB layout. So far, the indicators available are 
@@ -134,7 +136,17 @@ in the PEB layout. So far, the indicators available are
 		{cmd:npl }{col 35}National numbers
 		{cmd:wup }{col 35}Write-ups
 		{hline 45}
-
+		
+		Instruction{col 35}Explanation
+		{hline 45}
+		{cmd:info }{col 35}return list with info
+		{hline 45}
+{pstd}
+{it:instruction} is a shorthand for a set of common instruction that perform a series
+of procedures that do not affect the final results. So far, there is only one instruction
+available in {cmd:peb}, {it:info}. When the user types {cmd:peb info}, no calculation 
+is performed and only relevant information is return in the {help return:return list}.
+		
 {marker exceptions}{...}
 {title:Exceptions files}
 {pstd}

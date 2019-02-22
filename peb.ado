@@ -34,7 +34,6 @@ cpivin(numlist)                ///
 ]
 
 
-drop _all
 gtsd check peb
 if ("`pause'" == "pause") pause on
 else                      pause off
@@ -43,16 +42,18 @@ else                      pause off
 qui {
 	
 	*------------------ SSC commands  ------------------
-	local sscados "dirlist unique missings"
-	foreach ado of local sscados {
-		cap which `ado'
-		if (_rc) ssc install `ado'
-		local adoupdate "`adoupdate' `ado'"
-	}
-	
-	if ("`adoupdate'" != "") 	{
-		adoupdate `adoupdate', ssconly 		
-		if ("`r(pkglist)'" != "") adoupdate `r(pkglist)', update
+	if !inlist("`indic'", "info") {
+		local sscados "dirlist unique missings"
+		foreach ado of local sscados {
+			cap which `ado'
+			if (_rc) ssc install `ado'
+			local adoupdate "`adoupdate' `ado'"
+		}
+		
+		if ("`adoupdate'" != "") 	{
+			adoupdate `adoupdate', ssconly 		
+			if ("`r(pkglist)'" != "") adoupdate `r(pkglist)', update
+		}
 	}
 	
 	/*==================================================
@@ -78,6 +79,7 @@ qui {
 		} // if year if 4-digit long
 	}
 	else local year:  disp %tdyy date("`c(current_date)'", "DMY")
+	return local year = `year'
 	
 	* Either Annual meeting (AM) or Spring meeting (SM)
 	if ("`meeting'" != "") {
@@ -95,7 +97,7 @@ qui {
 			error
 		}
 	}
-	
+	return local meeting = "`meeting'"
 	
 	* CPI vintage
 	if ("`cpivin'" != "" & "`indic'" != "plc") {
@@ -108,7 +110,7 @@ qui {
 	local povecodir "\\gpvfile\GPV\Knowledge_Learning\Global_Stats_Team\PEB/`meeting'20`year'"
 	
 	if ("`indir'"  == "") {
-		local indir  "//wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
+		local indir  "\\wbgfscifs01\gtsd\02.core_team\02.data\01.Indicators"
 	}
 	if ("`outdir'" == "") {
 		local outdir "`pebdir'/01.PEB_`meeting'`year'\01.PEB_`meeting'`year'_QA"
@@ -123,6 +125,14 @@ qui {
 	* Shared prosperity input directory
 	if regexm("`indir'", "(.*\\)([a-zA-Z0-9\.]+)$") /* 
   */	     local spdir = regexs(1)+"02.SharedProsperity"
+	
+	return local pebdir    = "`pebdir'"
+	return local povecodir = "`povecodir'"
+	return local indir     = "`indir'"
+	return local outdir    = "`outdir'"
+	return local ttldir    = "`ttldir'"
+	return local auxdir    = "`auxdir'"
+	return local spdir     = "`spdir'"
 	
 	* vintage control
 	if ("`vcdate'" == "" ) {
@@ -144,8 +154,11 @@ qui {
 		noi disp as err "you must specify one {cmd:indicator} at a time."
 		error 
 	}
-
 	
+	* info 
+	if ("`indic'" == "info") exit
+	
+	drop _all
 /* ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
    ------------------------------------------------------------------------------
                             Auxiliary Options
@@ -354,7 +367,7 @@ qui {
 		*-------------------------------------------------------------
 		*------------------Include Group Data------------------------
 		*-------------------------------------------------------------
-		pause pov - before merging group data
+		pause `indic' - before merging group data
 		
 		merge 1:1 id using "`outdir'\02.input/peb_`indic'_GD.dta", nogen /* 
 		*/ update replace  

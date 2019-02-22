@@ -143,7 +143,6 @@ qui {
 		
 		* Countries without explicit 
 		local maxyr: disp %tdCCYY date("`c(current_date)'", "DMY")
-		local maxyr = 2016   // to delete
 		numlist "2000/`maxyr'"
 		
 		pause exceptions - Before excluding years for rest of countries 2000/`maxyr'
