@@ -358,10 +358,10 @@ qui {
 		gen id = countrycode + year + indicator + case
 		
 		keep id indicator region countrycode year filename case /* 
-		*/  date time datetime values comparable
+		*/  date time datetime values comparable welftype
 		
 		order id indicator region countrycode year filename /* 
-		*/   date time  datetime case values comparable
+		*/   date time  datetime case values comparable welftype
 		
 		
 		*-------------------------------------------------------------

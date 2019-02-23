@@ -173,16 +173,15 @@ qui {
 		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'_`datetime'")
 		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'", replace)
 		
-					
 		*** generate char for shp file ***
 		if ("`indic'"=="shp"){
-		local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
-		local datetimeHRF = trim("`datetimeHRF'")
-		local user=c(username)
-		char _dta[`indic'_datetimeHRF]    "`datetimeHRF'"
-		char _dta[`indic'_calcset]        "`indic'"
-		char _dta[`indic'_user]           "`user'"
-		char _dta[`indic'_datasignature_si] "`_dta[datasignature_si]'"
+			local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
+			local datetimeHRF = trim("`datetimeHRF'")
+			local user=c(username)
+			char _dta[`indic'_datetimeHRF]    "`datetimeHRF'"
+			char _dta[`indic'_calcset]        "`indic'"
+			char _dta[`indic'_user]           "`user'"
+			char _dta[`indic'_datasignature_si] "`_dta[datasignature_si]'"
 		}		
 		
 		save "`outdir'\02.input/_vintage/peb_`indic'_`datetime'.dta" 
@@ -222,22 +221,6 @@ qui {
 		
 		if (`rcmastsign' | `rcmaster' | "`force'" != "") {  // IF file is different or does not exist
 			
-		
-			* Char file  
-			tempname post_handle 
-            tempfile char_file 
-            local post_varlist str6(indic) str20(date_time) str8(user) str40(datasignature)
-			postutil clear 
-			postfile `post_handle' `post_varlist' using `char_file', replace
-			if ("${groupdata}"!="1") {
-			post `post_handle' ("`_dta[`indic'_calcset]'") ("`_dta[`indic'_datetimeHRF]'") ("`_dta[`indic'_user]'") ( "`_dta[`indic'_datasignature_si]'")  
-			}
-			else{
-			post `post_handle' ("`_dta[`indic'_GD_calcset]'") ("`_dta[`indic'_GD_datetimeHRF]'") ("`_dta[`indic'_GD_user]'") ( "`_dta[`indic'_GD_datasignature_si]'")  
-			}
-			postclose `post_handle'
-			macro drop groupdata
-			
 			* DTA file
 			sort indicator countrycode source year case
 			datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_master_`datetime'")
@@ -257,8 +240,8 @@ qui {
 				if (_rc) {
 					noi disp in red "Error updating codeteam/peb_master.xlsx." _n
 					error
-				    }
-			    else {
+				}
+			  else {
 					noi disp in y "file codeteam/peb_master.xlsx updated successfully"
 				}
 				
@@ -274,86 +257,106 @@ qui {
 					error
 				}
 				else {
-				noi disp in y "file aux/peb_master.xlsx updated successfully"
+					noi disp in y "file aux/peb_master.xlsx updated successfully"
+				}
+			}		
+		
+			/*==================================================
+						 Characteristics
+			==================================================*/
+
+			* Char file  
+			tempname post_handle 
+			tempfile char_file 
+			local post_varlist str6(indic) str20(date_time) str8(user) str40(datasignature)
+			postutil clear 
+			postfile `post_handle' `post_varlist' using `char_file', replace
+			if ("${groupdata}"!="1") {
+				post `post_handle' ("`_dta[`indic'_calcset]'") ("`_dta[`indic'_datetimeHRF]'") ("`_dta[`indic'_user]'") ( "`_dta[`indic'_datasignature_si]'")  
+			}
+			else{
+				post `post_handle' ("`_dta[`indic'_GD_calcset]'") ("`_dta[`indic'_GD_datetimeHRF]'") ("`_dta[`indic'_GD_user]'") ( "`_dta[`indic'_GD_datasignature_si]'")  
+			}
+			postclose `post_handle'
+			macro drop groupdata
+			
+			
+			**********************
+			** hostorical char  **
+			**********************
+
+			use "`outdir'\02.input/char_track.dta", clear 
+			append using `char_file' 
+			save, replace
+			
+			*** export to excel ***
+			if ("`excel'" == "") {
+				*** export to codeteam\peb_master.xlsx
+				cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
+							*/  sheetreplace first(variable) sheet(char_vintage)
+				if (_rc) {
+					noi disp in red "char_vintage did not export to codeteam/peb_master.xlsx." _n
+					error
+				}
+				else {
+					noi disp in y "char_vintage is updated in codeteam/peb_master.xlsx successfully"
+				}
+						 
+				*** export to aux\peb_master.xlsx
+				cap export excel using "`auxdir'\peb_master.xlsx" , /* 
+					*/  sheetreplace first(variable) sheet(char_vintage)
+				if (_rc) {
+					noi disp in red "char_vintage did not export to aux/peb_master.xlsx." _n
+					error
+				}
+				else {
+					noi disp in y "char_vintage is updated in aux/peb_master.xlsx successfully"
 				}
 			}
+			else{
+				noi disp in y "You are not saving char_vintage to Excel"
+			}
 			
+			*****************
+			** latest char **
+			*****************
+			use "`outdir'\02.input/peb_char.dta", clear 
+			merge 1:1 indic using `char_file', nogen update replace 
+			save, replace
 			
+			*** export to excel ***
+			if ("`excel'" == "") {
+				*** export to codeteam\peb_master.xlsx
+				cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
+							*/  sheetreplace first(variable) sheet(char_recent)
+				if (_rc) {
+					noi disp in red "char_recent did not export to codeteam/peb_master.xlsx." _n
+					error
+				}
+				else {
+					noi disp in y "char_recent is updated in codeteam/peb_master.xlsx successfully"
+				}
+				
+				*** export to aux\peb_master.xlsx
+				cap export excel using "`auxdir'\peb_master.xlsx" , /* 
+							*/  sheetreplace first(variable) sheet(char_recent)
+				if (_rc) {
+					noi disp in red "char_recent did not export to aux/peb_master.xlsx." _n
+					error
+				}
+				else {
+					noi disp in y "char_recent is updated in aux/peb_master.xlsx successfully"
+				}
+			}
+			else {
+				noi disp in y "You are not saving char_recent to Excel"
+			}	
+		
+		
 		} // End of master file update
-		
-    **********************
-	** hostorical char  **
-	**********************
-
-	use "`outdir'\02.input/char_track.dta", clear 
-	append using `char_file' 
-	save, replace
 	
-	*** export to excel ***
-	if ("`excel'" == ""){
-	*** export to codeteam\peb_master.xlsx
-	cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
-				*/  sheetreplace first(variable) sheet(char_vintage)
-	if (_rc) {
-		noi disp in red "char_vintage did not export to codeteam/peb_master.xlsx." _n
-		error
-		}
-		else {
-		noi disp in y "char_vintage is updated in codeteam/peb_master.xlsx successfully"
-		}
-			 
-	*** export to aux\peb_master.xlsx
-	cap export excel using "`auxdir'\peb_master.xlsx" , /* 
-		*/  sheetreplace first(variable) sheet(char_vintage)
-	if (_rc) {
-		noi disp in red "char_vintage did not export to aux/peb_master.xlsx." _n
-		error
-		}
-		else {
-		noi disp in y "char_vintage is updated in aux/peb_master.xlsx successfully"
-		}
-	}
-	else{
-		noi disp in y "You are not saving char_vintage to Excel"
-	}
-	
-	*****************
-	** latest char **
-	*****************
-	use "`outdir'\02.input/peb_char.dta", clear 
-	merge 1:1 indic using `char_file', nogen update replace 
-	save, replace
-	
-	*** export to excel ***
-	if ("`excel'" == ""){
-	*** export to codeteam\peb_master.xlsx
-	cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
-				*/  sheetreplace first(variable) sheet(char_recent)
-	if (_rc) {
-		noi disp in red "char_recent did not export to codeteam/peb_master.xlsx." _n
-		error
-		}
-		else{
-		noi disp in y "char_recent is updated in codeteam/peb_master.xlsx successfully"
-		}
-	
-	*** export to aux\peb_master.xlsx
-	cap export excel using "`auxdir'\peb_master.xlsx" , /* 
-				*/  sheetreplace first(variable) sheet(char_recent)
-	if (_rc) {
-		noi disp in red "char_recent did not export to aux/peb_master.xlsx." _n
-		error
-		}
-		else{
-		noi disp in y "char_recent is updated in aux/peb_master.xlsx successfully"
-		}
-	}
-	else{
-		noi disp in y "You are not saving char_recent to Excel"
-		}	
-		
-		
 	} // end of indicator file update 
+	
 	else {
 		noi disp in y "files /peb_`indic'.dta and /peb_master.dta not updated"
 	}
@@ -363,8 +366,7 @@ qui {
 		noi disp in r _n "Note:" in y "You are not saving the Excel files. " _c /* 
    */ "Make sure to use option {it:force} next time you want to " _n /* 
 	 */  "replace the current Excel files."
-		global peb_excel_use = 1
-		
+		global peb_excel_use = 1	
 	}
 	
 } // end of qui

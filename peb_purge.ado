@@ -134,9 +134,10 @@ qui {
 				local find = "restored from " + regexs(3)
 			}
 			else {
-				local vc1  = "`vc'"
-				local vc2  = ""
-				local find = ""
+				local vc1        = "`vc'"
+				local vc2        = ""
+				local find       = ""
+				local dispdate2  = ""
 			}
 			
 			
