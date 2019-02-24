@@ -309,7 +309,8 @@ qui {
 		replace welftype = "CONS" if (welftype != "INC")        
 		replace welftype = "CONS" if regexm(welfarevar, "pcexp")
 		replace welftype = "INC"  if regexm(welfarevar, "pcinc")
-		replace welftype = "INC"  if region == "LAC" & !regexm(filename, "_PCN")
+		replace welftype = "INC"  if region == "LAC" & !regexm(filename, "_PCN") /* 
+		*/ &  countrycode  != "HTI"
 		
 		
 		
