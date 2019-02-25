@@ -349,7 +349,7 @@ qui {
 			
 			keep if case == "gini"
 			replace values = value*100 if /* 
-			*/  (mod(values, 10) > 0 & mod(values, 10) < 1 & case == "gini")				
+			*/  (values < 1 & case == "gini")				
 			
 		}
 		drop if values == .
