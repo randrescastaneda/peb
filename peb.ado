@@ -397,8 +397,8 @@ qui {
 		
 		*------------- Describe input file
 		* local spdir \\wbgfscifs01\GTSD\02.core_team\02.data\02.SharedProsperity
-		local shpfilename "`spdir'/GDSP circa 2010-2015_forPEB_AM2018.xlsx"
-		pause shp - load GDSP circa 2010-2015
+		local shpfilename "`spdir'/GDSP circa 2011-2016_forPEB_SM2019.xlsx"
+		pause shp - load GDSP circa 2011-2016
 		
 		/*!!! dirlist is not working. Alternatively, we directly use part of the 
 		ado file of "dirlist" here. (line 399 to line 436).!!!*/
@@ -481,8 +481,8 @@ qui {
 		missings dropobs, force 
 		
 		gen sequence = `mexseq' + 1
-		gen round = "AM2018"
-		gen circayear = "2010-2015"
+		gen round = "SM2018"
+		gen circayear = "2011-2016"
 		
 		append using `oldseq'
 		
@@ -507,7 +507,7 @@ qui {
 		*ShP premium
 		cap gen double premium=growthb40-growthtotal
 		
-		** In PEB AM2018 "master" worksheet format	
+		** In PEB "master" worksheet format	
 		rename (premium growthb40 growthtotal) (pre b40 tot)
 		rename (pre b40 tot) values=
 		
@@ -519,6 +519,21 @@ qui {
 		ren period year
 		gen source=""
 		gen comparable = . 
+		
+		** gen characterstics for dta file 
+		 
+		* datetime  
+		local date = date("`c(current_date)'", "DMY")  // %tdDDmonCCYY  
+		local time = clock("`c(current_time)'", "hms") // %tcHH:MM:SS  
+		local datetime = `date'*24*60*60*1000 + `time'  // %tcDDmonCCYY_HH:MM:SS  
+		local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime' 
+		local datetimeHRF = trim("`datetimeHRF'")	 
+		local user=c(username) 
+ 
+		char _dta[`indic'_datetimeHRF]    "`datetimeHRF'" 
+		char _dta[`indic'_calcset]        "`indic'" 
+		char _dta[`indic'_user]           "`user'" 
+		char _dta[`indic'_datasignature_si] "`_dta[datasignature_si]'" 
 		
 		compress
 		
