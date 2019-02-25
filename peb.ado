@@ -497,7 +497,7 @@ qui {
 		
 		gen double datetime = date*24*60*60*1000 + time  // I do it this way to understand the relation
 		format datetime %tcDDmonCCYY_HH:MM:SS
-		
+				
 		rename code countrycode
 		
 		*Max sequence
@@ -522,18 +522,29 @@ qui {
 		
 		** gen characterstics for dta file 
 		 
-		* datetime  
+		* indicators (From Minh's excel file) *
+		local ind_date = date("`fdates'", "DMY")  
+		local ind_time = clock("`ftimes'", "hm")  
+		local ind_datetime = `ind_date'*24*60*60*1000 + `ind_time' 
+		local ind_datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `ind_datetime' 
+		local ind_datetimeHRF = trim("`ind_datetimeHRF'")	
+		
+		char _dta[ind_`indic'_datetimeHRF]    "`ind_datetimeHRF'" 
+		char _dta[ind_`indic'_user]           "Minh" 
+		char _dta[ind_`indic'_datasignature_si] "`_dta[datasignature_si]'" 
+		
+		* peb *	
 		local date = date("`c(current_date)'", "DMY")  // %tdDDmonCCYY  
 		local time = clock("`c(current_time)'", "hms") // %tcHH:MM:SS  
 		local datetime = `date'*24*60*60*1000 + `time'  // %tcDDmonCCYY_HH:MM:SS  
 		local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime' 
-		local datetimeHRF = trim("`datetimeHRF'")	 
+		local datetimeHRF = trim("`datetimeHRF'")	
 		local user=c(username) 
  
-		char _dta[`indic'_datetimeHRF]    "`datetimeHRF'" 
-		char _dta[`indic'_calcset]        "`indic'" 
-		char _dta[`indic'_user]           "`user'" 
-		char _dta[`indic'_datasignature_si] "`_dta[datasignature_si]'" 
+		char _dta[peb_`indic'_datetimeHRF]    "`datetimeHRF'" 
+		char _dta[peb_`indic'_calcset]        "`indic'" 
+		char _dta[peb_`indic'_user]           "`user'" 
+		char _dta[peb_`indic'_datasignature_si] "`_dta[datasignature_si]'" 
 		
 		compress
 		
