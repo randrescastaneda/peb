@@ -136,6 +136,13 @@ qui {
 	if (_rc) {
 		* use "`outdir'\02.input/peb_`indic'.dta", clear
 		qui peb `indic', load `pause' 
+		
+		* remove original char
+		char _dta[pov_datetimeHRF]
+		char _dta[pov_calcset]
+		char _dta[pov_user]
+		char _dta[pov_datasignature_si]
+	
 		cap rename filename source
 		
 		cap drop _merge
@@ -172,18 +179,7 @@ qui {
 	
 		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'_`datetime'")
 		datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'", replace)
-		
-		*** generate char for shp file ***
-		if ("`indic'"=="shp"){
-			local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
-			local datetimeHRF = trim("`datetimeHRF'")
-			local user=c(username)
-			char _dta[`indic'_datetimeHRF]    "`datetimeHRF'"
-			char _dta[`indic'_calcset]        "`indic'"
-			char _dta[`indic'_user]           "`user'"
-			char _dta[`indic'_datasignature_si] "`_dta[datasignature_si]'"
-		}		
-		
+
 		save "`outdir'\02.input/_vintage/peb_`indic'_`datetime'.dta" 
 		save "`outdir'\02.input/peb_`indic'.dta", replace
 		noi disp in y "file /peb_`indic'.dta has been updated"
@@ -191,6 +187,13 @@ qui {
 		*** ---- Update master file--------***
 		if (`rcmaster' == 0 | "`force'" != "") { // If master DOES exist				
 			qui peb master, load `pause'
+			
+			* remove original char
+			char _dta[`indic'_datetimeHRF]
+			char _dta[`indic'_calcset]
+			char _dta[`indic'_user]
+			char _dta[`indic'_datasignature_si]
+			
 			cap rename filename source
 			
 			drop if indicator == "`indic'" // for next round this has to change. 
