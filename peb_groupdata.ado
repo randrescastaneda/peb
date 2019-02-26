@@ -21,7 +21,7 @@ CALCulate                      ///
 indir(string)                  ///
 outdir(string)                 ///
 ttldir(string)                 ///
-pause                          ///
+pause force                    ///
 ]
 
 
@@ -32,7 +32,8 @@ local auxdir "`outdir'\_aux"
 
 local infile "PEB_templateGroupData.xlsm"
 
-
+local gd_file "`auxdir'/`infile'"
+local gd_file: subinstr local gd_file "/" "\", all
 /*==================================================
 Load data from template
 ==================================================*/
@@ -339,38 +340,51 @@ if ("`indic'" == "key") {
 /*==================================================
 Add characteristics
 ==================================================*/
-* datetime
-local date = date("`c(current_date)'", "DMY")  // %tdDDmonCCYY
-local time = clock("`c(current_time)'", "hms") // %tcHH:MM:SS
-loca datetime = `date'*24*60*60*1000 + `time'  // %tcDDmonCCYY_HH:MM:SS
 
-*cap noi datasignature confirm using /* 
-*	*/ "`outdir'\02.input/_datasignature/peb_`indic'_GD", strict
-*if (_rc) {	
-*datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'_GD_`datetime'")
-*datasignature set, reset saving("`outdir'\02.input/_datasignature/peb_`indic'_GD", replace)
+**** indicators ****
+tempfile dirlist
+local shellcmd `"dir `gd_file'>`dirlist'"'
+quietly shell `shellcmd'
+
+tempname fh		
+file open `fh' using "`dirlist'", text read
+file read `fh' line
+	
+while r(eof)==0  {
+	
+	if `"`line'"' ~= "" & substr(`"`line'"',1,1) ~= " " {
+		local fdates : word 1 of `line'
+		local ftimes : word 2 of `line'
+	}
+	file read `fh' line	
+}
+file close `fh'
+
+local ind_date = date("`fdates'", "MDY")  
+local ind_time = clock("`ftimes'", "hm")  
+local ind_datetime = `ind_date'*24*60*60*1000 + `ind_time' 
+local ind_datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `ind_datetime' 
+local ind_datetimeHRF = trim("`ind_datetimeHRF'")
 datasignature set, reset
+	
+char _dta[ind_`indic'_GD_calcset]        "`indic'_GD" 
+char _dta[ind_`indic'_GD_datetimeHRF]    "`ind_datetimeHRF'" 
+char _dta[ind_`indic'_GD_user]           "Minh" 
+char _dta[ind_`indic'_GD_datasignature_si] "`_dta[datasignature_si]'" 
 
-local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
-local datetimeHRF = trim("`datetimeHRF'")
-local user=c(username)
-char _dta[`indic'_GD_datetimeHRF]    "`datetimeHRF'"
-char _dta[`indic'_GD_calcset]        "`indic'_GD"
-char _dta[`indic'_GD_user]           "`user'"
-char _dta[`indic'_GD_datasignature_si] "`_dta[datasignature_si]'"
 }
 /*==================================================
 Save and execute general calculations
 ==================================================*/
 save "`outdir'\02.input/peb_`indic'_GD.dta", replace
 *save "`outdir'\02.input/_vintage/peb_`indic'_`datetime'.dta"
-noi disp in y "file /peb_`indic'_GD.dta has been updated" _n
+noi disp in y "file peb_`indic'_GD.dta has been updated" _n
 *}
 *else{
 * noi disp in y "The groupdata is not updated" _n
 *}
 global groupdata = 1
-noi peb `indic'
+noi peb `indic',`force'
 end
 
 *-------------------- Generate time variables

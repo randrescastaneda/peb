@@ -294,13 +294,13 @@ qui {
 			local post_varlist str6(indic) str20(ind_date_time) str8(ind_user) str20(peb_date_time) str8(peb_user) str40(ind_datasignature)
 			postutil clear 
 			postfile `post_handle' `post_varlist' using `char_file', replace
-			if ("${groupdata}"!="1") {
-				post `post_handle' ("`_dta[ind_`indic'_calcset]'") ("`_dta[ind_`indic'_datetimeHRF]'") ("`_dta[ind_`indic'_user]'")  /*
+			if ("${groupdata}"!="1"){
+			post `post_handle' ("`_dta[ind_`indic'_calcset]'") ("`_dta[ind_`indic'_datetimeHRF]'") ("`_dta[ind_`indic'_user]'") /*
 				*/ ("`_dta[peb_`indic'_datetimeHRF]'") ("`_dta[peb_`indic'_user]'") ( "`_dta[ind_`indic'_datasignature_si]'")
 			}
 			else{
 				post `post_handle' ("`_dta[ind_`indic'_GD_calcset]'") ("`_dta[ind_`indic'_GD_datetimeHRF]'") ("`_dta[ind_`indic'_GD_user]'") /*
-				*/ ("`_dta[peb_`indic'_GD_datetimeHRF]'") ("`_dta[peb_`indic'_GD_user]'") ( "`_dta[ind_`indic'_GD_datasignature_si]'")  
+				*/ ("`_dta[peb_`indic'_datetimeHRF]'") ("`_dta[peb_`indic'_user]'") ( "`_dta[ind_`indic'_GD_datasignature_si]'")
 			}
 			postclose `post_handle'
 			macro drop groupdata
