@@ -397,58 +397,35 @@ qui {
 		
 		*------------- Describe input file
 		* local spdir \\wbgfscifs01\GTSD\02.core_team\02.data\02.SharedProsperity
-		local shpfilename "`spdir'/GDSP circa 2011-2016_forPEB_SM2019.xlsx"
+		local shpfilename "`spdir'\GDSP circa 2011-2016_forPEB_SM2019.xlsx"
 		pause shp - load GDSP circa 2011-2016
 		
 		/*!!! dirlist is not working. Alternatively, we directly use part of the 
-		ado file of "dirlist" here. (line 399 to line 436).!!!*/
+		ado file of "dirlist" here. (line 412 to line 428).!!!*/
 		
 		*dirlist "`shpfilename'"
 		*local ftimes = "`r(ftimes)'"
 		*local fdates = "`r(fdates)'"
 		*local fdates: display %tdNN/DD/CCYY date(c(current_date), "DMY")
 		*local ftimes: display %tcHh:MM-AM clock(c(current_time),"hms")
-
 		
 		tempfile dirlist
 		local shellcmd `"dir "`shpfilename'">`dirlist'"'
 		quietly shell `shellcmd'
 
-		tempname fh
-		
+		tempname fh		
 		file open `fh' using "`dirlist'", text read
 		file read `fh' line
-	
-		local nfiles = 0
 	
 		while r(eof)==0  {
 	
 		if `"`line'"' ~= "" & substr(`"`line'"',1,1) ~= " " {
-
-			if "`c(os)'" == "Windows" {
-			
-				local fdate : word 1 of `line'
-				local ftime : word 2 of `line'
-				local word3 : word 3 of `line'
-				
-				if upper("`word3'")=="AM" | upper("`word3'")=="PM" {
-					local ftime "`ftime'-`word3'"
-					local fsize : word 4 of `line'
-					local fname : word 5 of `line'
-					}
-				else {
-					local fsize : word 3 of `line'
-					local fname : word 4 of `line'
-					}							
-				}
-				local fdates "`fdates' `fdate'"
-				local ftimes "`ftimes' `ftime'"
-				local nfiles = `nfiles' + 1
+				local fdates : word 1 of `line'
+				local ftimes : word 2 of `line'
 			}
 			file read `fh' line	
 		}
-		file close `fh'
-		
+		file close `fh'		
 		
 		import excel using "`shpfilename'", describe
 		local shtname1  = "`r(worksheet_1)'" 
@@ -481,7 +458,7 @@ qui {
 		missings dropobs, force 
 		
 		gen sequence = `mexseq' + 1
-		gen round = "SM2018"
+		gen round = "SM2019"
 		gen circayear = "2011-2016"
 		
 		append using `oldseq'
@@ -519,34 +496,21 @@ qui {
 		ren period year
 		gen source=""
 		gen comparable = . 
+				
+		compress
 		
-		** gen characterstics for dta file 
-		 
-		* indicators (From Minh's excel file) *
-		local ind_date = date("`fdates'", "DMY")  
+		** add charactersitics 		
+		local ind_date = date("`fdates'", "MDY")  
 		local ind_time = clock("`ftimes'", "hm")  
 		local ind_datetime = `ind_date'*24*60*60*1000 + `ind_time' 
 		local ind_datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `ind_datetime' 
-		local ind_datetimeHRF = trim("`ind_datetimeHRF'")	
-		
+		local ind_datetimeHRF = trim("`ind_datetimeHRF'")
+		datasignature set, reset
+	
+		char _dta[ind_`indic'_calcset]        "`indic'" 
 		char _dta[ind_`indic'_datetimeHRF]    "`ind_datetimeHRF'" 
 		char _dta[ind_`indic'_user]           "Minh" 
 		char _dta[ind_`indic'_datasignature_si] "`_dta[datasignature_si]'" 
-		
-		* peb *	
-		local date = date("`c(current_date)'", "DMY")  // %tdDDmonCCYY  
-		local time = clock("`c(current_time)'", "hms") // %tcHH:MM:SS  
-		local datetime = `date'*24*60*60*1000 + `time'  // %tcDDmonCCYY_HH:MM:SS  
-		local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime' 
-		local datetimeHRF = trim("`datetimeHRF'")	
-		local user=c(username) 
- 
-		char _dta[peb_`indic'_datetimeHRF]    "`datetimeHRF'" 
-		char _dta[peb_`indic'_calcset]        "`indic'" 
-		char _dta[peb_`indic'_user]           "`user'" 
-		char _dta[peb_`indic'_datasignature_si] "`_dta[datasignature_si]'" 
-		
-		compress
 		
 		* Save data
 		pause shp - before saving 

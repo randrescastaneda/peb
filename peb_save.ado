@@ -20,10 +20,23 @@ noexcel                         ///
 if ("`pause'" == "pause") pause on
 else                      pause off
 
-
-
 * Indicator-specific conditions
 qui {
+	*************************************
+	** gen characterstics for peb code **
+	*************************************
+	
+	local date = date("`c(current_date)'", "DMY")  // %tdDDmonCCYY  
+	local time = clock("`c(current_time)'", "hms") // %tcHH:MM:SS  
+	local datetime = `date'*24*60*60*1000 + `time'  // %tcDDmonCCYY_HH:MM:SS  
+	local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime' 
+	local datetimeHRF = trim("`datetimeHRF'")	
+	local user=c(username) 
+ 
+	char _dta[peb_`indic'_datetimeHRF]    "`datetimeHRF'" 
+	char _dta[peb_`indic'_calcset]        "`indic'" 
+	char _dta[peb_`indic'_user]           "`user'" 
+	
 	* Save file
 	tempfile indicfile
 	save `indicfile', replace
@@ -127,7 +140,6 @@ qui {
 	*/ case values indicator comparable
 	
 	
-	
 	cap confirm file "`outdir'\02.input/peb_master.dta"
 	local rcmaster = _rc
 	
@@ -138,10 +150,14 @@ qui {
 		qui peb `indic', load `pause' 
 		
 		* remove original char
-		char _dta[pov_datetimeHRF]
-		char _dta[pov_calcset]
-		char _dta[pov_user]
-		char _dta[pov_datasignature_si]
+		char _dta[ind_`indic'_datetimeHRF]
+		char _dta[ind_`indic'_calcset]
+		char _dta[ind_`indic'_user]
+		char _dta[ind_`indic'_datasignature_si]
+		char _dta[peb_`indic'_datetimeHRF]
+		char _dta[peb_`indic'_calcset]
+		char _dta[peb_`indic'_user]
+		char _dta[peb_`indic'_datasignature_si]
 	
 		cap rename filename source
 		
@@ -189,10 +205,14 @@ qui {
 			qui peb master, load `pause'
 			
 			* remove original char
-			char _dta[`indic'_datetimeHRF]
-			char _dta[`indic'_calcset]
-			char _dta[`indic'_user]
-			char _dta[`indic'_datasignature_si]
+			char _dta[ind_`indic'_datetimeHRF]
+			char _dta[ind_`indic'_calcset]
+			char _dta[ind_`indic'_user]
+			char _dta[ind_`indic'_datasignature_si]
+			char _dta[peb_`indic'_datetimeHRF]
+			char _dta[peb_`indic'_calcset]
+			char _dta[peb_`indic'_user]
+			char _dta[peb_`indic'_datasignature_si]
 			
 			cap rename filename source
 			
@@ -268,17 +288,19 @@ qui {
 						 Characteristics
 			==================================================*/
 
-			* Char file  
+			** Char temp file  
 			tempname post_handle 
 			tempfile char_file 
-			local post_varlist str6(indic) str20(date_time) str8(user) str40(datasignature)
+			local post_varlist str6(indic) str20(ind_date_time) str8(ind_user) str20(peb_date_time) str8(peb_user) str40(ind_datasignature)
 			postutil clear 
 			postfile `post_handle' `post_varlist' using `char_file', replace
 			if ("${groupdata}"!="1") {
-				post `post_handle' ("`_dta[`indic'_calcset]'") ("`_dta[`indic'_datetimeHRF]'") ("`_dta[`indic'_user]'") ( "`_dta[`indic'_datasignature_si]'")  
+				post `post_handle' ("`_dta[ind_`indic'_calcset]'") ("`_dta[ind_`indic'_datetimeHRF]'") ("`_dta[ind_`indic'_user]'")  /*
+				*/ ("`_dta[peb_`indic'_datetimeHRF]'") ("`_dta[peb_`indic'_user]'") ( "`_dta[ind_`indic'_datasignature_si]'")
 			}
 			else{
-				post `post_handle' ("`_dta[`indic'_GD_calcset]'") ("`_dta[`indic'_GD_datetimeHRF]'") ("`_dta[`indic'_GD_user]'") ( "`_dta[`indic'_GD_datasignature_si]'")  
+				post `post_handle' ("`_dta[ind_`indic'_GD_calcset]'") ("`_dta[ind_`indic'_GD_datetimeHRF]'") ("`_dta[ind_`indic'_GD_user]'") /*
+				*/ ("`_dta[peb_`indic'_GD_datetimeHRF]'") ("`_dta[peb_`indic'_GD_user]'") ( "`_dta[ind_`indic'_GD_datasignature_si]'")  
 			}
 			postclose `post_handle'
 			macro drop groupdata
@@ -371,7 +393,7 @@ qui {
 	 */  "replace the current Excel files."
 		global peb_excel_use = 1	
 	}
-	
+qui peb master, load	
 } // end of qui
 
 
