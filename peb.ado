@@ -997,6 +997,22 @@ qui {
 			gen values`=100*`ll'' = `ll'*cpi2011*icp2011
 		}
 		
+		*gen char for plc
+		local fdate: char _dta[date]
+		local fdate:subinstr local fdate "-" "", all
+		local ftime: char _dta[time]	
+		local ffdate = date("`fdate'", "MDY")  // %tdDDmonCCYY
+		local fftime = clock("`ftime'", "hms") // %tcHH:MM:SS
+		local ffdatetime = `ffdate'*24*60*60*1000 + `fftime' 
+		local user: char _dta[user]
+		datasignature set, reset
+		
+		local fdatetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `ffdatetime'
+		local fdatetimeHRF = trim("`fdatetimeHRF'")
+		char _dta[ind_`indic'_datetimeHRF] "`fdatetimeHRF'"
+		char _dta[ind_`indic'_calcset]     "`indic'"
+		char _dta[ind_`indic'_user]        "`user'"
+		char _dta[ind_`indic'_datasignature_si] "`_dta[datasignature_si]'"
 		
 		* Fix for Malaysia
 		replace year = year - 1 if countrycode == "MYS"
