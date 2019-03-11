@@ -52,7 +52,8 @@ if ("`tver'" == "" ) {
  
 local sheets welfaretype_all
 
-local countries "CHN CPV ZWE MKD IND SSD"
+
+local countries "CHN ZWE MKD IND SSD LCA" /* CPV is exclude since SM2019*/
 local countries_: subinstr local countries " " "|", all
 
 
