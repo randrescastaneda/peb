@@ -560,10 +560,14 @@ qui {
 		pause npl - right after merge with  exceptions
 		
 		* Add comparable year
-		merge m:1 countrycode year  using `comparafile', /*  
-		*/  keep(match) keepusing(comparable) 
+		*merge m:1 countrycode year  using `comparafile', /*  
+		**/  keep(match) keepusing(comparable) 
 		
-		destring comparable, replace force
+		*destring comparable, replace force
+		gen comparable=1 if comparability=="Yes" | comparability=="yes"
+		replace comparable=0 if comparability=="No" | comparability=="no" | comparability=="No, PLs are not comparable"
+		replace comparable=2 if comparable==.
+		* 1=comparable, 0=not comparable, 2=dont know
 		
 		pause npl - after merging with comparable
 		
@@ -571,7 +575,7 @@ qui {
 		rename (population line gini) values=		
 		rename ex_* values*
 		
-		duplicates tag countrycode year comparable datetime, gen(tag)
+		duplicates tag countrycode year datetime, gen(tag)
 		keep if (tag == 0  | (tag > 0 & valuespopulation != ""))
 		drop tag
 		
@@ -605,6 +609,10 @@ qui {
 		
 		order id indicator countrycode year source /* 
 		*/   date time  datetime case values
+		
+		replace values=-99 if values==.
+		
+		pause npl- after replace missing values with -99
 		
 		gen ttl = 1
 		tempfile ttlfile
