@@ -700,6 +700,15 @@ qui {
 		order id indicator region countrycode year source /* 
 		*/   date time  datetime case values comparable
 		
+		*** gen char for npl 
+		local ind_datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS datetime 
+		local ind_datetimeHRF = trim("`ind_datetimeHRF'") 
+		 
+		char _dta[ind_`indic'_calcset]        "`indic'"  
+		char _dta[ind_`indic'_datetimeHRF]    "`ind_datetimeHRF'"  
+		char _dta[ind_`indic'_user]           "TTL/WDI"  
+		char _dta[ind_`indic'_datasignature_si] "`_dta[datasignature_si]'"  
+		 
 		pause npl - Right before saving
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
 	 */	 `pause' auxdir("`auxdir'") `excel'
