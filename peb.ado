@@ -560,10 +560,14 @@ qui {
 		pause npl - right after merge with  exceptions
 		
 		* Add comparable year
-		merge m:1 countrycode year  using `comparafile', /*  
-		*/  keep(match) keepusing(comparable) 
+		*merge m:1 countrycode year  using `comparafile', /*  
+		**/  keep(match) keepusing(comparable) 
 		
-		destring comparable, replace force
+		*destring comparable, replace force
+		gen comparable=1 if comparability=="Yes" | comparability=="yes"
+		replace comparable=0 if comparability=="No" | comparability=="no" | comparability=="No, PLs are not comparable"
+		replace comparable=2 if comparable==.
+		* 1=comparable, 0=not comparable, 2=dont know
 		
 		pause npl - after merging with comparable
 		
@@ -571,7 +575,7 @@ qui {
 		rename (population line gini) values=		
 		rename ex_* values*
 		
-		duplicates tag countrycode year comparable datetime, gen(tag)
+		duplicates tag countrycode year datetime, gen(tag)
 		keep if (tag == 0  | (tag > 0 & valuespopulation != ""))
 		drop tag
 		
@@ -605,6 +609,10 @@ qui {
 		
 		order id indicator countrycode year source /* 
 		*/   date time  datetime case values
+		
+		replace values=-99 if values==.
+		
+		pause npl- after replace missing values with -99
 		
 		gen ttl = 1
 		tempfile ttlfile
@@ -692,6 +700,21 @@ qui {
 		order id indicator region countrycode year source /* 
 		*/   date time  datetime case values comparable
 		
+		pause npl - before add char
+		
+		*** gen char for npl 
+		sort datetime
+		gen newdatetime=datetime
+		replace newdatetime=newdatetime[_n-1] if newdatetime==.
+		local ind_datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS newdatetime[_N] 
+		local ind_datetimeHRF = trim("`ind_datetimeHRF'") 
+		drop newdatetime
+		 
+		char _dta[ind_`indic'_calcset]        "`indic'"  
+		char _dta[ind_`indic'_datetimeHRF]    "`ind_datetimeHRF'"  
+		char _dta[ind_`indic'_user]           "TTL/WDI"  
+		char _dta[ind_`indic'_datasignature_si] "`_dta[datasignature_si]'"  
+		 
 		pause npl - Right before saving
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
 	 */	 `pause' auxdir("`auxdir'") `excel'
