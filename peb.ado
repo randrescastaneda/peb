@@ -692,9 +692,17 @@ qui {
 		order id indicator region countrycode year source /* 
 		*/   date time  datetime case values comparable
 		
+		pause npl - before add char
+		
+		
+		
 		*** gen char for npl 
-		local ind_datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS datetime 
-		local ind_datetimeHRF = trim("`ind_datetimeHRF'") 
+		sort datetime 
+		gen newdatetime=datetime 
+		replace newdatetime=newdatetime[_n-1] if newdatetime==. 
+		local ind_datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS newdatetime[_N]  
+		local ind_datetimeHRF = trim("`ind_datetimeHRF'")  
+		drop newdatetime 
 		 
 		char _dta[ind_`indic'_calcset]        "`indic'"  
 		char _dta[ind_`indic'_datetimeHRF]    "`ind_datetimeHRF'"  
