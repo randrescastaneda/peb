@@ -59,6 +59,14 @@ qui {
 			
 			use "`outdir'\02.input/peb_`indic'.dta", clear
 			
+			char _dta[ind_`indic'_datetimeHRF]  
+			char _dta[ind_`indic'_calcset]      
+			char _dta[ind_`indic'_user]         
+			char _dta[ind_`indic'_datasignature_si] 
+			char _dta[peb_`indic'_datetimeHRF]      
+			char _dta[peb_`indic'_calcset]         
+			char _dta[peb_`indic'_user]        
+			
 			tostring topublish toclearance, force replace 
 			merge 1:1 id using `indicfile', replace update nogen
 			replace writeup = "no write-up available for " + countrycode /* 
@@ -127,7 +135,92 @@ qui {
 					noi disp in y "file peb_`indic'.xlsx updated successfully"
 				}
 			} // Save Excel file end			
-		} // update results data 
+		} // update results data
+		/*==================================================
+					 Characteristics
+		==================================================*/
+		use "`outdir'\02.input/peb_`indic'.dta", clear
+		
+		** Char temp file  
+		tempname post_handle 
+		tempfile char_file 
+		local post_varlist str6(indic) str20(ind_date_time) str8(ind_user) str20(peb_date_time) str8(peb_user) str40(ind_datasignature)
+		postutil clear 
+		postfile `post_handle' `post_varlist' using `char_file', replace
+		post `post_handle' ("`_dta[ind_`indic'_calcset]'") ("`_dta[ind_`indic'_datetimeHRF]'") ("`_dta[ind_`indic'_user]'") /*
+			*/ ("`_dta[peb_`indic'_datetimeHRF]'") ("`_dta[peb_`indic'_user]'") ( "`_dta[ind_`indic'_datasignature_si]'")
+
+		postclose `post_handle'		
+			
+		**********************
+		** hostorical char  **
+		**********************
+		use "`outdir'\02.input/char_track.dta", clear 
+		append using `char_file' 
+		save, replace
+			
+		*** export to excel ***
+		if ("`excel'" == "") {
+			*** export to codeteam\peb_master.xlsx
+			cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
+			*/  sheetreplace first(variable) sheet(char_vintage)
+			if (_rc) {
+				noi disp in red "char_vintage did not export to codeteam/peb_master.xlsx." _n
+				error
+			}
+			else {
+				noi disp in y "char_vintage is updated in codeteam/peb_master.xlsx successfully"
+			}
+						 
+			*** export to aux\peb_master.xlsx
+			cap export excel using "`auxdir'\peb_master.xlsx" , /* 
+			*/  sheetreplace first(variable) sheet(char_vintage)
+			if (_rc) {
+				noi disp in red "char_vintage did not export to aux/peb_master.xlsx." _n
+				error
+			}
+			else {
+				noi disp in y "char_vintage is updated in aux/peb_master.xlsx successfully"
+			}
+		}
+		else{
+			noi disp in y "You are not saving char_vintage to Excel"
+		}
+			
+		*****************
+		** latest char **
+		*****************
+		use "`outdir'\02.input/peb_char.dta", clear 
+		merge 1:1 indic using `char_file', nogen update replace 
+		save, replace
+			
+		*** export to excel ***
+		if ("`excel'" == "") {
+			*** export to codeteam\peb_master.xlsx
+			cap export excel using "`outdir'\05.tools\peb_master.xlsx" , /* 
+			*/  sheetreplace first(variable) sheet(char_recent)
+			if (_rc) {
+				noi disp in red "char_recent did not export to codeteam/peb_master.xlsx." _n
+				error
+			}
+			else {
+				noi disp in y "char_recent is updated in codeteam/peb_master.xlsx successfully"
+			}
+				
+			*** export to aux\peb_master.xlsx
+			cap export excel using "`auxdir'\peb_master.xlsx" , /* 
+						*/  sheetreplace first(variable) sheet(char_recent)
+			if (_rc) {
+				noi disp in red "char_recent did not export to aux/peb_master.xlsx." _n
+				error
+			}
+			else {
+				noi disp in y "char_recent is updated in aux/peb_master.xlsx successfully"
+			}
+		}
+		else {
+			noi disp in y "You are not saving char_recent to Excel"
+		}				
 		exit
 	}  // end of procedure for write up file
 	
@@ -145,7 +238,7 @@ qui {
 	
 	
 	cap confirm new file "`outdir'\02.input/peb_`indic'.dta"
-	if (_rc) {
+	if (_rc) {// if the peb_`indic' exists
 		* use "`outdir'\02.input/peb_`indic'.dta", clear
 		qui peb `indic', load `pause' 
 		

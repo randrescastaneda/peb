@@ -659,19 +659,35 @@ qui {
 		
 		pause before droping duplicates 
 		
-		duplicates tag id, gen(tag)
-		keep if (tag == 0    | /* 
-		*/      (tag >0 & ttl == 1 & inlist(case, "line", "gini")) |  /* 
-		*/      (tag >0 & case == "popu" & values != .)) 
-		drop tag 
+		***********************************************************************************
+		**** replace missing popu with WDI data, even the missing data id droped by ttl ***
+		***********************************************************************************
+		qui{
+		*duplicates tag id, gen(tag)
+		*keep if (tag == 0    | /* 
+		**/      (tag >0 & ttl == 1 & inlist(case, "line", "gini")) |  /* 
+		**/      (tag >0 & case == "popu" & values != .)) 
+		*drop tag 
 		
-		duplicates tag id, gen(tag)
-		keep if (tag == 0 | tag >0 & ttl == 1)
-		drop tag 
+		*duplicates tag id, gen(tag)
+		*keep if (tag == 0 | tag >0 & ttl == 1)
+		*drop tag 
 		
 		/* duplicates tag id, gen(tag)
 		keep if (tag == 0  | (tag >0 & ttl == 1 & case == "popu" & values == .) )
 		*/	
+		}
+		*******************************************************
+		**** keep all the data from ttl even it is missing ****
+		*******************************************************
+		duplicates tag id, gen(tag)
+		keep if (tag == 0    | /* 
+		*/      (tag >0 & ttl == 1 & inlist(case, "line", "gini","popu")))
+		drop tag 		
+		
+		duplicates tag id, gen(tag)
+		keep if (tag == 0 | tag >0 & ttl == 1)
+		drop tag 
 		
 		pause after droping duplicates 
 		
@@ -683,8 +699,8 @@ qui {
 		replace values = value/100 if /* 
 		*/  (mod(values, 1000) < values & case == "gini")
 		
-		
 		drop if values == .
+		
 		
 		keep id indicator region countrycode year source case /* 
 		*/  date time datetime values comparable
@@ -889,7 +905,6 @@ qui {
 		
 		* use "`outdir'/02.input/peb_writeupupdate.dta", clear
 		
-		
 		peb writeupupdate_edited, load
 		replace case = "keyfindings"  if case == "Progress on Poverty and Equality" 
 		replace case = "nationaldata" if case == "Poverty Data and Methodology"     
@@ -954,7 +969,6 @@ qui {
 		replace writeup = subinstr(writeup, `"won't"'     , `"will not"', .)
 		replace writeup = subinstr(writeup, `"wouldn't"'  , `"would not"', .)
 		
-		
 		gen toclearance = "0"
 		gen topublish   = "0"
 		
@@ -966,6 +980,17 @@ qui {
 		order `keepvars'
 		keep `keepvars'
 		
+		** gen char 
+		sort datetime 
+		local wupuser = upi[_N]	 
+		local ind_datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS datetime[_N] 
+		local ind_datetimeHRF = trim("`ind_datetimeHRF'")
+		 
+		char _dta[ind_`indic'_datetimeHRF] "`ind_datetimeHRF'" 
+		char _dta[ind_`indic'_calcset]     "`indic'" 
+		char _dta[ind_`indic'_user]        "`wupuser'" 
+		char _dta[ind_`indic'_datasignature_si] "`_dta[datasignature_si]'"
+		 
 		pause wup - before saving 
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
 	 */	 `pause' auxdir("`auxdir'") `excel'
