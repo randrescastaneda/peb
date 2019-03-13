@@ -905,7 +905,6 @@ qui {
 		
 		* use "`outdir'/02.input/peb_writeupupdate.dta", clear
 		
-		
 		peb writeupupdate_edited, load
 		replace case = "keyfindings"  if case == "Progress on Poverty and Equality" 
 		replace case = "nationaldata" if case == "Poverty Data and Methodology"     
@@ -970,7 +969,6 @@ qui {
 		replace writeup = subinstr(writeup, `"won't"'     , `"will not"', .)
 		replace writeup = subinstr(writeup, `"wouldn't"'  , `"would not"', .)
 		
-		
 		gen toclearance = "0"
 		gen topublish   = "0"
 		
@@ -982,6 +980,17 @@ qui {
 		order `keepvars'
 		keep `keepvars'
 		
+		** gen char 
+		sort datetime 
+		local wupuser = upi[_N]	 
+		local ind_datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS datetime[_N] 
+		local ind_datetimeHRF = trim("`ind_datetimeHRF'")
+		 
+		char _dta[ind_`indic'_datetimeHRF] "`ind_datetimeHRF'" 
+		char _dta[ind_`indic'_calcset]     "`indic'" 
+		char _dta[ind_`indic'_user]        "`wupuser'" 
+		char _dta[ind_`indic'_datasignature_si] "`_dta[datasignature_si]'"
+		 
 		pause wup - before saving 
 		noi peb_save `indic', datetime(`datetime') outdir("`outdir'") `force' /* 
 	 */	 `pause' auxdir("`auxdir'") `excel'
