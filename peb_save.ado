@@ -145,7 +145,7 @@ qui {
 	
 	
 	cap confirm new file "`outdir'\02.input/peb_`indic'.dta"
-	if (_rc) {
+	if (_rc) {// if the peb_`indic' exists
 		* use "`outdir'\02.input/peb_`indic'.dta", clear
 		qui peb `indic', load `pause' 
 		

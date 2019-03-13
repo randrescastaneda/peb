@@ -659,19 +659,35 @@ qui {
 		
 		pause before droping duplicates 
 		
-		duplicates tag id, gen(tag)
-		keep if (tag == 0    | /* 
-		*/      (tag >0 & ttl == 1 & inlist(case, "line", "gini")) |  /* 
-		*/      (tag >0 & case == "popu" & values != .)) 
-		drop tag 
+		***********************************************************************************
+		**** replace missing popu with WDI data, even the missing data id droped by ttl ***
+		***********************************************************************************
+		qui{
+		*duplicates tag id, gen(tag)
+		*keep if (tag == 0    | /* 
+		**/      (tag >0 & ttl == 1 & inlist(case, "line", "gini")) |  /* 
+		**/      (tag >0 & case == "popu" & values != .)) 
+		*drop tag 
 		
-		duplicates tag id, gen(tag)
-		keep if (tag == 0 | tag >0 & ttl == 1)
-		drop tag 
+		*duplicates tag id, gen(tag)
+		*keep if (tag == 0 | tag >0 & ttl == 1)
+		*drop tag 
 		
 		/* duplicates tag id, gen(tag)
 		keep if (tag == 0  | (tag >0 & ttl == 1 & case == "popu" & values == .) )
 		*/	
+		}
+		*******************************************************
+		**** keep all the data from ttl even it is missing ****
+		*******************************************************
+		duplicates tag id, gen(tag)
+		keep if (tag == 0    | /* 
+		*/      (tag >0 & ttl == 1 & inlist(case, "line", "gini","popu")))
+		drop tag 		
+		
+		duplicates tag id, gen(tag)
+		keep if (tag == 0 | tag >0 & ttl == 1)
+		drop tag 
 		
 		pause after droping duplicates 
 		
@@ -683,8 +699,8 @@ qui {
 		replace values = value/100 if /* 
 		*/  (mod(values, 1000) < values & case == "gini")
 		
-		
 		drop if values == .
+		
 		
 		keep id indicator region countrycode year source case /* 
 		*/  date time datetime values comparable
